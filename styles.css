@@ -186,4 +186,5 @@ footer {
 .table-wrapper {
     max-height: 550px; /* Ajuste conforme necessário */
     overflow-y: auto;
+    overflow-x: auto;
 }

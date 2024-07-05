@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabela com Coluna Fixa</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .table-wrapper {
+            display: flex;
+            width: 100%;
+        }
+        .table-fixed-column {
+            width: 150px; /* largura fixa da coluna */
+            position: relative;
+            background-color: white;
+            z-index: 2;
+        }
+        .table-scroll {
+            overflow-x: auto;
+            flex-grow: 1;
+        }
+        .table-scroll table {
+            width: 100%;
+        }
+        .table-scroll thead th {
+            position: sticky;
+            top: 0;
+            background-color: white;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="table-wrapper">
+            <div class="table-fixed-column">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Coluna Fixa</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Fixa 1</td></tr>
+                        <tr><td>Fixa 2</td></tr>
+                        <tr><td>Fixa 3</td></tr>
+                        <tr><td>Fixa 4</td></tr>
+                        <tr><td>Fixa 5</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="table-scroll">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Coluna 1</th>
+                            <th>Coluna 2</th>
+                            <th>Coluna 3</th>
+                            <th>Coluna 4</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1.1</td>
+                            <td>1.2</td>
+                            <td>1.3</td>
+                            <td>1.4</td>
+                        </tr>
+                        <tr>
+                            <td>2.1</td>
+                            <td>2.2</td>
+                            <td>2.3</td>
+                            <td>2.4</td>
+                        </tr>
+                        <tr>
+                            <td>3.1</td>
+                            <td>3.2</td>
+                            <td>3.3</td>
+                            <td>3.4</td>
+                        </tr>
+                        <tr>
+                            <td>4.1</td>
+                            <td>4.2</td>
+                            <td>4.3</td>
+                            <td>4.4</td>
+                        </tr>
+                        <tr>
+                            <td>5.1</td>
+                            <td>5.2</td>
+                            <td>5.3</td>
+                            <td>5.4</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.6.0/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

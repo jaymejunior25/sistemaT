@@ -19,30 +19,41 @@ if (!$user || $user['nome'] !== 'sede') {
 }
     
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $codigo_barra = $_POST['codigobarras'];
+    $codigobarras = $_POST['codigobarras'];
 
     //=B32492480005907    =B32492480005940    =B32492480005941    =B32492480006007    =B32492480006040    A510006133468A  A510006133448A  A510006133498A    B3252510006133498     
 
     $digitoverificarp = substr($codigobarras, 0, 1);
     $digitoverificaru = substr($codigobarras, -1);
-
-    if ($digitoverificarp == '=' || ctype_digit( $digitoverificaru)) {
+    if ($digitoverificarp == '=' && ctype_digit( $digitoverificaru)) {
         $codigobarras = substr($codigobarras, 1);
+        // Extrair o penúltimo dígito do código de barras
+        $penultimo_digito = substr($codigobarras, -2, 1);
+    }
+        // Se a primeira letra for 'B' ou 'b', muda o penúltimo dígito para '0'
+    elseif ($digitoverificarp == 'B' ||  $digitoverificarp == 'b' && ctype_digit( $digitoverificaru)) {
+        $codigobarras = substr_replace($codigobarras, '0', -2, 1);
+
+        // Extrair o penúltimo dígito do código de barras
+        $penultimo_digito = substr($codigobarras, -2, 1);
     }
     else{
         // Remover o primeiro e o último dígito do código de barras 
         $codigobarras = substr($codigobarras, 1, -1);
+        // Extrair o penúltimo dígito do código de barras
+        $penultimo_digito = substr($codigobarras, -2, 1);
     }
 
+    
     // Extrair o penúltimo dígito do código de barras
-    $penultimo_digito = substr($codigo_barra, -2, 1);
+   // $penultimo_digito = substr($codigobarras, -2, 1);
 
     // Extrair os dois ultmos dígitos do código de barras
-    $doisultimos_digito = substr($codigo_barra, -2);
+    //$doisultimos_digito = substr($codigobarras, -2);
 
     // Verificar se o pacote tem status "enviado"
     $stmt = $dbconn->prepare("SELECT status FROM pacotes WHERE codigobarras = :codigobarras");
-    $stmt->execute([':codigobarras' => $codigo_barra]);
+    $stmt->execute([':codigobarras' => $codigobarras]);
     $pacote = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if ($pacote && $pacote['status'] === 'enviado') {
@@ -50,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt = $dbconn->prepare("UPDATE pacotes SET data_recebimento = NOW(), status = 'recebido', usuario_recebimento_id = :usuario_recebimento_id WHERE codigobarras = :codigobarras");
         $stmt->execute([
             ':usuario_recebimento_id' => $_SESSION['user_id'],
-            ':codigobarras' => $codigo_barra
+            ':codigobarras' => $codigobarras
         ]);
 
         $mensagem = 'Amostra recebida com sucesso!';

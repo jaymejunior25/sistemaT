@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $data_inicio = $_POST['data_inicio'];
 
 
-    $sql = "SELECT p.id, p.status, p.codigobarras, p.descricao, p.data_envio, p.data_recebimento, p.data_cadastro, l_envio.nome AS envio_nome, u_envio.usuario AS enviado_por, u_recebimento.usuario AS recebido_por,
+    $sql = "SELECT p.id, p.status, p.codigobarras, p.descricao, p.data_envio, p.data_recebimento, p.data_cadastro, l_envio.nome AS envio_nome, l_lab.nome AS lab_nome, u_envio.usuario AS enviado_por, u_recebimento.usuario AS recebido_por,
     u_cadastro.usuario AS cadastrado_por, l_cadastro.nome AS cadastro_nome 
     FROM pacotes p 
     LEFT JOIN unidadehemopa l_envio ON p.unidade_envio_id = l_envio.id 
@@ -26,6 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     LEFT JOIN usuarios u_cadastro ON p.usuario_cadastro_id = u_cadastro.id 
     LEFT JOIN usuarios u_envio ON p.usuario_envio_id = u_envio.id 
     LEFT JOIN usuarios u_recebimento ON p.usuario_recebimento_id = u_recebimento.id
+    LEFT JOIN laboratorio l_lab ON p.lab_id = l_lab.id
     WHERE data_envio >= :data_inicio AND data_recebimento IS NULL 
     ORDER BY p.data_cadastro DESC ";
 
@@ -61,22 +62,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <a href="index.php" class="btn btn-secondary"> <i class="fas fa-angle-left"></i> Voltar</a>
         </form>
         <?php if ($_SERVER['REQUEST_METHOD'] == 'POST'): ?>
-        <ul class="nav nav-pills">  
-        <div class="table-wrapper">  
+
+        <div class="table-wrapper" style="position: relative;" id="managerTable">  
         <table class="table table-bordered table-hover table-striped">
             <thead class="theadfixed">
                 <tr>
-                    <th>Codigo de Barras</th>
+                    <th>Codigo de <br>Barras</th>
                     <th>Status</th>
                     <th>Descrição</th>
-                    <th>Data de Cadastro</th>
-                    <th>Data de Envio</th>
-                    <th>Data de Recebimento</th>
-                    <th>Local de Cadastro</th>
-                    <th>Local de Envio</th>
+                    <th>Laboratorio</th>
+                    <th>Data de <br>Cadastro</th>
+                    <th>Data de <br>Envio</th>
+                    
+                    <th>Local de <br>Cadastro</th>
+                    <th>Local de <br>Envio</th>
                     <th>Cadastrado por</th>
                     <th>Enviado por</th>
-                    <th>Recebido por</th>
+                    
                 </tr>
             </thead>
             <tbody>
@@ -94,14 +96,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                 <?php endif; ?>
                             </td>
                             <td><?php echo htmlspecialchars($pacote['descricao']); ?></td>
-                            <td><?php echo htmlspecialchars($pacote['data_cadastro']); ?></td>
-                            <td><?php echo htmlspecialchars($pacote['data_envio']); ?></td>
-                            <td><?php echo htmlspecialchars($pacote['data_recebimento']); ?></td>
+                            <td><?php echo htmlspecialchars($pacote['lab_nome']); ?></td>
+                            <td><?php echo htmlspecialchars(date("d-m-Y", strtotime($pacote['data_cadastro']))); ?></td>
+                            <td><?php if($pacote['data_envio']) {echo htmlspecialchars(date("d-m-Y", strtotime($pacote['data_envio'])));}; ?></td>
+                            
                             <td><?php echo htmlspecialchars($pacote['cadastro_nome']); ?></td>
                             <td><?php echo htmlspecialchars($pacote['envio_nome']); ?></td>
                             <td><?php echo htmlspecialchars($pacote['cadastrado_por']); ?></td>
                             <td><?php echo htmlspecialchars($pacote['enviado_por']); ?></td>
-                            <td><?php echo htmlspecialchars($pacote['recebido_por']); ?></td>
+                            
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>
@@ -111,8 +114,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <?php endif; ?>
             </tbody>
         </table>
-        </ul>
-        <form method="post" action="generate_pdf.php" target="_blank">
+
+        
+    </div>
+    <form method="post" action="generate_pdf.php" target="_blank">
                 <input type="hidden" name="data_inicio" value="<?php echo htmlspecialchars($data_inicio); ?>">
                 <button type="submit" class="btn btn-danger"> <i class="far fa-file-pdf"></i> Baixar PDF</button>
             </form>
@@ -123,7 +128,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <?php endif; ?>
 
         <a href="logout.php" class="btn btn-danger btn-lg mt-3"><i class="fas fa-sign-out-alt"></i> Logout</a>
-    </div>
     </div>
         
     <div class="fixed-bottom toggle-footer cursor_to_down" id="footer_fixed" >

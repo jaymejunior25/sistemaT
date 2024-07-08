@@ -13,11 +13,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $usuario_cadastro_id = $_SESSION['user_id'];
     $local_id = $_SESSION['unidade_id'];
     //=B32492480005907    =B32492480005940    =B32492480005941    =B32492480006007    =B32492480006040    A510006133468A  A510006133448A  A510006133498A    B3252510006133498     
-    // separa o primeiro e o último dígito do código de barras 
+    // separa o primeiro e o último dígito do código de barras  A510006133498A  =B32492480006043       
     $digitoverificarp = substr($codigobarras, 0, 1);
     $digitoverificaru = substr($codigobarras, -1);
-    if ($digitoverificarp == '=' || ctype_digit( $digitoverificaru)) {
+    if ($digitoverificarp == '=' && ctype_digit( $digitoverificaru)) {
         $codigobarras = substr($codigobarras, 1);
+        // Extrair o penúltimo dígito do código de barras
+        $penultimo_digito = substr($codigobarras, -2, 1);
+    }
+        // Se a primeira letra for 'B' ou 'b', muda o penúltimo dígito para '0'
+    elseif ($digitoverificarp == 'B' ||  $digitoverificarp == 'b' && ctype_digit( $digitoverificaru)) {
+        $codigobarras = substr_replace($codigobarras, '0', -2, 1);
+
         // Extrair o penúltimo dígito do código de barras
         $penultimo_digito = substr($codigobarras, -2, 1);
     }

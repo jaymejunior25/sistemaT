@@ -105,15 +105,16 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <th>Codigo de Barras</th>
                         <th>Status</th>
                         <th>Descrição</th>
+                        <th>Laboratório</th>
                         <th>Data de Cadastro</th>
                         <th>Data de Envio</th>
-                        <th>Data de Recebimento</th>
+                        <!--<th>Data de Recebimento</th> -->
                         <th>Local de Cadastro</th>
                         <th>Local de Envio</th>
-                        <th>Laboratório</th>
+                        
                         <th>Cadastrado por</th>
                         <th>Enviado por</th>
-                        <th>Recebido por</th>
+                        <!-- <th>Recebido por</th> -->
                     </tr>
                 </thead>
                 <tbody>
@@ -131,15 +132,17 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <?php endif; ?>
                                 </td>
                                 <td><?php echo htmlspecialchars($pacote['descricao']); ?></td>
-                                <td><?php echo htmlspecialchars($pacote['data_cadastro']); ?></td>
-                                <td><?php echo htmlspecialchars($pacote['data_envio']); ?></td>
-                                <td><?php echo htmlspecialchars($pacote['data_recebimento']); ?></td>
+                                <td><?php echo htmlspecialchars($pacote['lab_nome']); ?></td>
+                                <td><?php echo htmlspecialchars(date("d-m-Y", strtotime($pacote['data_cadastro']))); ?></td> 
+                                <td><?php if($pacote['data_envio']) {echo htmlspecialchars(date("d-m-Y", strtotime($pacote['data_envio'])));}; ?></td>
+                                <!-- <td><?php echo htmlspecialchars($pacote['data_envio']); ?></td> -->
+                                <!--  <td><?php echo htmlspecialchars($pacote['data_recebimento']); ?></td> -->
                                 <td><?php echo htmlspecialchars($pacote['cadastro_nome']); ?></td>
                                 <td><?php echo htmlspecialchars($pacote['envio_nome']); ?></td>
-                                <td><?php echo htmlspecialchars($pacote['lab_nome']); ?></td>
+                                
                                 <td><?php echo htmlspecialchars($pacote['cadastrado_por']); ?></td>
                                 <td><?php echo htmlspecialchars($pacote['enviado_por']); ?></td>
-                                <td><?php echo htmlspecialchars($pacote['recebido_por']); ?></td>
+                                <!-- <td><?php echo htmlspecialchars($pacote['recebido_por']); ?></td> -->
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>

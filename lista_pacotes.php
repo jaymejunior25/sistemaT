@@ -36,14 +36,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
 }
 
 // Construir a consulta SQL com base nos filtros
-$sql = "SELECT p.id, p.status, p.codigobarras, p.descricao, p.data_envio, p.data_recebimento, p.data_cadastro, l_envio.nome AS envio_nome, u_envio.usuario AS enviado_por, u_recebimento.usuario AS recebido_por,
+$sql = "SELECT p.id, p.status, p.codigobarras, p.descricao, p.data_envio, p.data_recebimento, p.data_cadastro, l_lab.nome AS lab_nome, l_envio.nome AS envio_nome, u_envio.usuario AS enviado_por, u_recebimento.usuario AS recebido_por,
         u_cadastro.usuario AS cadastrado_por, l_cadastro.nome AS cadastro_nome 
         FROM pacotes p 
         LEFT JOIN unidadehemopa l_envio ON p.unidade_envio_id = l_envio.id 
         LEFT JOIN unidadehemopa l_cadastro ON p.unidade_cadastro_id = l_cadastro.id 
         LEFT JOIN usuarios u_cadastro ON p.usuario_cadastro_id = u_cadastro.id 
         LEFT JOIN usuarios u_envio ON p.usuario_envio_id = u_envio.id 
-        LEFT JOIN usuarios u_recebimento ON p.usuario_recebimento_id = u_recebimento.id";
+        LEFT JOIN usuarios u_recebimento ON p.usuario_recebimento_id = u_recebimento.id
+        LEFT JOIN laboratorio l_lab ON p.lab_id = l_lab.id";
 
 $conditions = [];
 $params = [];
@@ -52,6 +53,8 @@ if ($filter == 'enviados') {
     $conditions[] = "p.data_envio IS NOT NULL";
 } elseif ($filter == 'recebidos') {
     $conditions[] = "p.data_recebimento IS NOT NULL";
+}elseif ($filter == 'cadastrado') {
+    $conditions[] = "p.data_cadastro IS NOT NULL";
 }
 
 if (!empty($local_id)) {
@@ -89,6 +92,9 @@ if (!empty($searchType) && !empty($searchQuery)) {
         case 'data_recebimento':
             $conditions[] = "TO_CHAR(p.data_recebimento, 'YYYY-MM-DD') LIKE :query";
             break;
+        case 'lab_nome':
+            $conditions[] = "l_lab.nome LIKE :query";
+            break;  
         default:
             break;
     }
@@ -127,12 +133,13 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <label for="filter" class="mr-2" style="color: #28a745;">Filtrar por:</label>
                 <select name="filter" id="filter" class="form-control">
                     <option value="">Todos</option>
+                    <option value="cadastrado" <?php if ($filter == 'cadastrado') echo 'selected'; ?>>Cadastrado</option>
                     <option value="enviados" <?php if ($filter == 'enviados') echo 'selected'; ?>>Enviados</option>
                     <option value="recebidos" <?php if ($filter == 'recebidos') echo 'selected'; ?>>Recebidos</option>
                 </select>
             </div>
             <div class="form-group mr-3">
-                <label for="local_id" class="mr-2" style="color: #28a745;">Local:</label>
+                <label for="local_id" class="mr-2" style="color: #28a745;">Local de Cadastro:</label>
                 <select name="local_id" id="local_id" class="form-control">
                     <option value="">Todos</option>
                     <?php foreach ($locais as $local): ?>
@@ -155,6 +162,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <option value="data_cadastro" <?php if ($searchType == 'data_cadastro') echo 'selected'; ?>>Data de Cadastro</option>
                     <option value="data_envio" <?php if ($searchType == 'data_envio') echo 'selected'; ?>>Data de Envio</option>
                     <option value="data_recebimento" <?php if ($searchType == 'data_recebimento') echo 'selected'; ?>>Data de Recebimento</option>
+                    <option value="lab_nome" <?php if ($searchType == 'lab_nome') echo 'selected'; ?>>Nome do Laboratorio</option>
                 </select>
             </div>
             <div class="form-group mr-3">
@@ -168,14 +176,15 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <table class="table table-bordered table-hover table-striped" >
                 <thead class="theadfixed">
                     <tr>
-                        <th>Codigo de Barras</th>
+                        <th>Codigo de<br> Barras</th>
                         <th>Status</th>
                         <th>Descrição</th>
-                        <th>Data de Cadastro</th>
-                        <th>Data de Envio</th>
-                        <th>Data de Recebimento</th>
-                        <th>Local de Cadastro</th>
-                        <th>Local de Envio</th>
+                        <th>laboratorio</th>
+                        <th>Data d<br>e Cadastro</th>
+                        <th>Data de <br>Envio</th>
+                        <th>Data de <br> Recebimento</th>
+                        <th>Local de <br>Cadastro</th>
+                        <th>Local de<br> Envio</th>
                         <th>Cadastrado por</th>
                         <th>Enviado por</th>
                         <th>Recebido por</th>
@@ -197,9 +206,10 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <?php endif; ?>
                                 </td>
                                 <td><?php echo htmlspecialchars($pacote['descricao']); ?></td>
-                                <td><?php echo htmlspecialchars($pacote['data_cadastro']); ?></td>
-                                <td><?php echo htmlspecialchars($pacote['data_envio']); ?></td>
-                                <td><?php echo htmlspecialchars($pacote['data_recebimento']); ?></td>
+                                <td><?php echo htmlspecialchars($pacote['lab_nome']); ?></td>
+                                <td><?php echo htmlspecialchars(date("d-m-Y", strtotime($pacote['data_cadastro']))); ?></td> 
+                                <td><?php if($pacote['data_envio']) {echo htmlspecialchars(date("d-m-Y", strtotime($pacote['data_envio'])));}; ?></td>
+                                <td><?php if($pacote['data_recebimento']) {echo htmlspecialchars(date("d-m-Y", strtotime($pacote['data_recebimento'])));}; ?></td>
                                 <td><?php echo htmlspecialchars($pacote['cadastro_nome']); ?></td>
                                 <td><?php echo htmlspecialchars($pacote['envio_nome']); ?></td>
                                 <td><?php echo htmlspecialchars($pacote['cadastrado_por']); ?></td>

@@ -34,7 +34,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_password']) &&
 }
 
 // Obter a lista de pacotes cadastrados para o local do usuário
-$stmt = $dbconn->prepare('SELECT * FROM pacotes WHERE unidade_cadastro_id = :unidade_cadastro_id AND status = :status_cadastro ');
+$stmt = $dbconn->prepare("SELECT p.id, p.status, p.codigobarras, p.descricao,  p.data_cadastro, l_lab.nome AS lab_nome,
+                        u_cadastro.usuario AS cadastrado_por, l_cadastro.nome AS cadastro_nome  FROM pacotes p 
+                        LEFT JOIN usuarios u_cadastro ON p.usuario_cadastro_id = u_cadastro.id 
+                        LEFT JOIN unidadehemopa l_cadastro ON p.unidade_cadastro_id = l_cadastro.id 
+                        LEFT JOIN laboratorio l_lab ON p.lab_id = l_lab.id
+                        WHERE unidade_cadastro_id = :unidade_cadastro_id AND status = :status_cadastro ");
 $stmt->execute(['unidade_cadastro_id' => $local_envio_id, 'status_cadastro' => $status_cadastro]);
 $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -70,21 +75,23 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <table class="table table-bordered table-hover table-striped">
                         <thead class="theadfixed">
                             <tr>
-                                
-                                <th>ID</th>
                                 <th>Descrição</th>
                                 <th>Código de Barras</th>
+                                <th>laboratorio</th>
                                 <th>Data de Cadastro</th>
+                                <th>Cadastrado por</th>
+                                <th>Local de <br>Cadastro</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($pacotes as $pacote): ?>
                                 <tr>
-                                   
-                                    <td><?php echo htmlspecialchars($pacote['id']); ?></td>
                                     <td><?php echo htmlspecialchars($pacote['descricao']); ?></td>
                                     <td><?php echo htmlspecialchars($pacote['codigobarras']); ?></td>
-                                    <td><?php echo htmlspecialchars($pacote['data_cadastro']); ?></td>
+                                    <td><?php echo htmlspecialchars($pacote['lab_nome']); ?></td>
+                                    <td><?php echo htmlspecialchars(date("d-m-Y", strtotime($pacote['data_cadastro']))); ?></td>
+                                    <td><?php echo htmlspecialchars($pacote['cadastrado_por']); ?></td>
+                                    <td><?php echo htmlspecialchars($pacote['cadastro_nome']); ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>

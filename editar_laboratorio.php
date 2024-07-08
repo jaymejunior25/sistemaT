@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         ':id' => $id
     ]);
 
-    header('Location: gerenciar_laboratorios.php');
+    header('Location: gerenciar_lab.php ');
     exit();
 }
 ?>

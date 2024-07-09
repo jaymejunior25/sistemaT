@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <link href="styles.css" rel="stylesheet">
 </head>
 <body>
-    <div class="container container-custom">
+    <div class="container container-customlistas">
         <h1 class="text-center">Adicionar Local</h1>
         <?php if (isset($_SESSION['error_message'])): ?>
             <div class="alert alert-danger">

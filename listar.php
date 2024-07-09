@@ -35,7 +35,7 @@ $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-    <div class="container container-custom">
+    <div class="container container-customlistas">
         <h1 class="text-center mb-4" style="color: #28a745;">Gerenciar Usuários</h1>
         <!-- Botão para abrir o modal de pesquisa -->
         <div class="text-center mb-4">

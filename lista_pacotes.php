@@ -66,6 +66,30 @@ if (!empty($searchType) && !empty($searchQuery)) {
     $queryParam = '%' . $searchQuery . '%';
     switch ($searchType) {
         case 'codigobarras':
+
+            $codigobarras = $searchQuery;
+
+            // Separa o primeiro e o último dígito do código de barras
+            $digitoverificarp = substr($codigobarras, 0, 1);
+            $digitoverificaru = substr($codigobarras, -1);
+
+            if ($digitoverificarp == '=' && ctype_digit($digitoverificaru)) {
+                $codigobarras = substr($codigobarras, 1);
+                // Extrair os dois últimos dígitos do código de barras
+                $doisultimos_digitos = substr($codigobarras, -2);
+            } elseif ($digitoverificarp == 'B' || $digitoverificarp == 'b' && ctype_digit($digitoverificaru)) {
+                $codigobarras = substr_replace($codigobarras, '0', -2, 1);
+                // Extrair o penúltimo dígito do código de barras
+                $penultimo_digito = substr($codigobarras, -2, 1);
+            } elseif(($digitoverificarp == 'A' || $digitoverificarp == 'a')&& ($digitoverificaru == 'B' || $digitoverificaru == 'b')) {
+                $codigobarras = substr($codigobarras, 1, -1);
+                $doisultimos_digitos = substr($codigobarras, -2);
+            }else {
+                $codigobarras = substr($codigobarras, 1, -1);
+                // Extrair o penúltimo dígito do código de barras
+                $penultimo_digito = substr($codigobarras, -2, 1);
+            }
+            $queryParam = '%' . $codigobarras . '%';
             $conditions[] = "p.codigobarras LIKE :query";
             break;
         case 'usuario_cadastro':

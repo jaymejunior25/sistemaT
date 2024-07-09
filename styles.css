@@ -15,7 +15,7 @@ body {
     max-width: 1200px;
     margin: 50px auto;
     padding: 20px;
-    background-color: #fff;
+    background-color: #4caca7;
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
@@ -149,7 +149,7 @@ a{
     text-align: center;
     text-decoration: none;
     font-size: 18px;
-    color: #333;
+    color: #2c8677;
     display: block;
 }
 .sidebar a:hover {

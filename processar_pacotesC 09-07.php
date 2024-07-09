@@ -20,16 +20,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Separa o primeiro e o último dígito do código de barras
         $digitoverificarp = substr($codigobarras, 0, 1);
         $digitoverificaru = substr($codigobarras, -1);
-
-        if ($digitoverificarp == '=' && ctype_digit($digitoverificaru)) {
+        echo $digitoverificarp;
+        if ($digitoverificarp === '=' && ctype_digit($digitoverificaru)) {
             $codigobarras = substr($codigobarras, 1);
+            $penultimo_digito = substr($codigoBarras, -2);
+            echo $penultimo_digito;
         } elseif ($digitoverificarp == 'B' || $digitoverificarp == 'b' && ctype_digit($digitoverificaru)) {
             $codigobarras = substr_replace($codigobarras, '0', -2, 1);
+            $penultimo_digito = substr($codigobarras, -2, 1);
         } else {
             $codigobarras = substr($codigobarras, 1, -1);
+            $penultimo_digito = substr($codigobarras, -2, 1);
         }
 
-        $penultimo_digito = substr($codigobarras, -2, 1);
+       
 
         // Consultar o ID do laboratório correspondente ao penúltimo dígito
         $stmt = $dbconn->prepare("SELECT id FROM laboratorio WHERE digito = :digito");
@@ -37,6 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $lab = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($lab) {
+            echo  $lab;
             $laboratorio_id = $lab['id'];
 
             // Inserir o novo pacote no banco de dados

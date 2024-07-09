@@ -1,64 +1,3 @@
-<?php
-session_start();
-include 'db.php';
-
-if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
-    exit();
-}
-
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $descricao = $_POST['descricao'];
-    $codigobarras = $_POST['codigobarras'];
-    $usuario_cadastro_id = $_SESSION['user_id'];
-    $local_id = $_SESSION['unidade_id'];
-    //=B32492480005907    =B32492480005940    =B32492480005941    =B32492480006007    =B32492480006040    A510006133468A  A510006133448A  A510006133498A    B3252510006133498     
-    // separa o primeiro e o último dígito do código de barras  A510006133498A  =B32492480006043       
-    $digitoverificarp = substr($codigobarras, 0, 1);
-    $digitoverificaru = substr($codigobarras, -1);
-    if ($digitoverificarp == '=' && ctype_digit( $digitoverificaru)) {
-        $codigobarras = substr($codigobarras, 1);
-        // Extrair o penúltimo dígito do código de barras
-        $penultimo_digito = substr($codigobarras, -2, 1);
-    }
-        // Se a primeira letra for 'B' ou 'b', muda o penúltimo dígito para '0'
-    elseif ($digitoverificarp == 'B' ||  $digitoverificarp == 'b' && ctype_digit( $digitoverificaru)) {
-        $codigobarras = substr_replace($codigobarras, '0', -2, 1);
-
-        // Extrair o penúltimo dígito do código de barras
-        $penultimo_digito = substr($codigobarras, -2, 1);
-    }
-    else{
-        // Remover o primeiro e o último dígito do código de barras 
-        $codigobarras = substr($codigobarras, 1, -1);
-        // Extrair o penúltimo dígito do código de barras
-        $penultimo_digito = substr($codigobarras, -2, 1);
-    }
-    // Consultar o ID do laboratório correspondente ao penúltimo dígito
-    $stmt = $dbconn->prepare("SELECT id FROM laboratorio WHERE digito = :digito");
-    $stmt->execute([':digito' => $penultimo_digito]);
-    $lab = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if ($lab) {
-        $laboratorio_id = $lab['id'];
-        // Inserir o novo pacote no banco de dados
-
-        $stmt = $dbconn->prepare("INSERT INTO pacotes (descricao, codigobarras, usuario_cadastro_id, unidade_cadastro_id, data_cadastro, lab_id ) VALUES (:descricao, :codigobarras, :usuario_cadastro_id, :unidade_cadastro_id, NOW(), :lab_id)");
-        $stmt->execute([
-            ':descricao' => $descricao,
-            ':codigobarras' => $codigobarras,
-            ':usuario_cadastro_id' => $usuario_cadastro_id,
-            ':unidade_cadastro_id' => $local_id,
-            ':lab_id' => $laboratorio_id
-        ]);
-
-        $mensagem = 'Amostra cadastrada com sucesso! ' ;
-    } else {
-        $mensagem = 'Laboratório não encontrado para o penúltimo dígito: ' . $penultimo_digito;
-    }
-}
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -76,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <?php if (isset($mensagem)): ?>
             <div class="alert alert-success"><?php echo $mensagem; ?></div>
         <?php endif; ?>
-        <form method="POST" action="">
+        <form id="pacoteForm">
             <div class="form-group">
                 <label for="descricao" style="color: #28a745;">Descrição:</label>
                 <input type="text" name="descricao" id="descricao" class="form-control" required>
@@ -85,18 +24,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <label for="codigobarras" style="color: #28a745;">Código de Barras:</label>
                 <input type="text" name="codigobarras" id="codigobarras" class="form-control" required>
             </div>
-            <button type="submit" class="btn btn-custom btn-block"><i class="fas fa-plus"></i>Cadastrar</button>
         </form>
+        <div id="pacotesList" class="mt-3"></div>
+        <button type="button" id="cadastrarTodos" class="btn btn-success btn-block mt-3"><i class="fas fa-check"></i>Cadastrar Todos</button>
         <div class="text-center mt-3">
-            <a href="index.php" class="btn btn-secondary">  <i class="fas fa-angle-left"></i> Voltar</a>
+            <a href="index.php" class="btn btn-secondary"><i class="fas fa-angle-left"></i> Voltar</a>
         </div>
         <a href="logout.php" class="btn btn-danger btn-lg mt-3">
             <i class="fas fa-sign-out-alt"></i> Logout
         </a>
     </div>
     <div class="fixed-bottom toggle-footer cursor_to_down" id="footer_fixed" >
-        <div class="fixed-bottom border-top bg-light text-center footer-content p-2" style="z-index:4; ">
-            <div class="footer-text" >
+        <div class="fixed-bottom border-top bg-light text-center footer-content p-2" style="z-index:4;">
+            <div class="footer-text">
                 Desenvolvido com &#128151; por Gerencia de Informatica - GETIN <br>
                 <a class="text-reset fw-bold" href="http://www.hemopa.pa.gov.br/site/">© Todos os direitos reservados 2024 Hemopa.</a>
             </div>
@@ -106,26 +46,66 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.6.0/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
-        // Função para monitorar inatividade
-        let inactivityTime = function () {
-            let time;
-            window.onload = resetTimer;
-            document.onmousemove = resetTimer;
-            document.onkeypress = resetTimer;
-            document.onscroll = resetTimer;
-            document.onclick = resetTimer;
+        let pacotes = [];
 
-            function logout() {
-                alert("Você foi desconectado devido à inatividade.");
-                window.location.href = 'logout.php';
+        document.getElementById('codigobarras').addEventListener('focusout', function() {
+            const descricao = document.getElementById('descricao').value;
+            const codigobarras = document.getElementById('codigobarras').value;
+
+            if (descricao && codigobarras) {
+                pacotes.unshift({ descricao, codigobarras });
+                atualizarListaPacotes();
+                document.getElementById('codigobarras').value = '';
+                document.getElementById('codigobarras').focus();
+            } else {
+                alert('Por favor, preencha todos os campos.');
+            }
+        });
+
+        document.getElementById('cadastrarTodos').addEventListener('click', function() {
+            if (pacotes.length === 0) {
+                alert('Nenhum pacote para cadastrar.');
+                return;
             }
 
-            function resetTimer() {
-                clearTimeout(time);
-                time = setTimeout(logout, 900000);  // Tempo em milissegundos 900000 = (15 minutos)
-            }
-        };
-        inactivityTime();
+            fetch('processar_pacotesC.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: 'pacotes=' + encodeURIComponent(JSON.stringify(pacotes))
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(data.message);
+                    pacotes = [];
+                    atualizarListaPacotes();
+                } else {
+                    alert('Erro ao cadastrar pacotes.');
+                }
+            });
+        });
+
+        function atualizarListaPacotes() {
+            const lista = document.getElementById('pacotesList');
+            lista.innerHTML = '';
+
+            pacotes.forEach((pacote, index) => {
+                const item = document.createElement('div');
+                item.className = 'alert alert-secondary d-flex justify-content-between align-items-center';
+                item.innerHTML = `
+                    <span>Descrição: ${pacote.descricao}, Código de Barras: ${pacote.codigobarras}</span>
+                    <button class="btn btn-danger btn-sm" onclick="removerPacote(${index})">Excluir</button>
+                `;
+                lista.appendChild(item);
+            });
+        }
+
+        function removerPacote(index) {
+            pacotes.splice(index, 1);
+            atualizarListaPacotes();
+        }
     </script>
 </body>
 </html>

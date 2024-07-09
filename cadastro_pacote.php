@@ -10,7 +10,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-    <div class="container container-custom">
+    <div class="container container-customlistas">
         <h1 class="text-center mb-4" style="color: #28a745;">Cadastrar Amostra</h1>
         <?php if (isset($mensagem)): ?>
             <div class="alert alert-success"><?php echo $mensagem; ?></div>
@@ -48,17 +48,44 @@
     <script>
         let pacotes = [];
 
+        function filtrarCodigoBarras(codigoBarras) {
+            let digitoverificarp = codigoBarras.charAt(0);
+            let digitoverificaru = codigoBarras.charAt(codigoBarras.length - 1);
+
+            if (digitoverificarp === '=' && !isNaN(digitoverificaru)) {
+                return codigoBarras.slice(1);
+            } else if ((digitoverificarp === 'B' || digitoverificarp === 'b') && !isNaN(digitoverificaru)) {
+                return codigoBarras.slice(0, -2) + '0' + codigoBarras.slice(-1);
+            } else {
+                return codigoBarras.slice(1, -1);
+            }
+        }
+        // Função para obter o nome do laboratório via AJAX
+        function obterNomeLaboratorio(lab_id) {
+            return fetch('get_nomeLab.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: 'lab_id=' + encodeURIComponent(lab_id)
+            })
+            .then(response => response.json())
+            .then(data => data.nomeLaboratorio)
+            .catch(error => console.error('Erro ao obter o nome do laboratório:', error));
+        }
+        
         document.getElementById('codigobarras').addEventListener('focusout', function() {
             const descricao = document.getElementById('descricao').value;
             const codigobarras = document.getElementById('codigobarras').value;
 
             if (descricao && codigobarras) {
-                pacotes.unshift({ descricao, codigobarras });
+                const codigobarrasFiltrado = filtrarCodigoBarras(codigobarras);
+                pacotes.unshift({ descricao, codigobarras, codigobarrasFiltrado });
                 atualizarListaPacotes();
                 document.getElementById('codigobarras').value = '';
                 document.getElementById('codigobarras').focus();
             } else {
-                alert('Por favor, preencha todos os campos.');
+                //alert('Por favor, preencha todos os campos.');
             }
         });
 
@@ -79,8 +106,17 @@
             .then(data => {
                 if (data.status === 'success') {
                     alert(data.message);
+                    const labs = data.labs;
+
+                    // Atualizar os pacotes com os nomes dos laboratórios
+                    Promise.all(labs.map(lab_id => obterNomeLaboratorio(lab_id)))
+                        .then(nomesLaboratorios => {
+                            pacotes.forEach((pacote, index) => {
+                                pacote.laboratorio_nome = nomesLaboratorios[index];
+                            });
+                            atualizarListaPacotes();
+                        });
                     pacotes = [];
-                    atualizarListaPacotes();
                 } else {
                     alert('Erro ao cadastrar pacotes.');
                 }
@@ -95,7 +131,7 @@
                 const item = document.createElement('div');
                 item.className = 'alert alert-secondary d-flex justify-content-between align-items-center';
                 item.innerHTML = `
-                    <span>Descrição: ${pacote.descricao}, Código de Barras: ${pacote.codigobarras}</span>
+                    <span>Descrição: ${pacote.descricao}, Código de Barras: ${pacote.codigobarrasFiltrado}, Nome do Laboratório: ${pacote.laboratorio_nome || ''}</span>
                     <button class="btn btn-danger btn-sm" onclick="removerPacote(${index})">Excluir</button>
                 `;
                 lista.appendChild(item);

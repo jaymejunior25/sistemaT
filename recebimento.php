@@ -10,7 +10,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-    <div class="container container-custom">
+    <div class="container container-customlistas">
         <h1 class="text-center mb-4" style="color: #28a745;">Receber Amostra</h1>
         <?php if (isset($mensagem)): ?>
             <div class="alert alert-success"><?php echo $mensagem; ?></div>
@@ -44,16 +44,30 @@
     <script>
         let pacotes = [];
 
+        function filtrarCodigoBarras(codigoBarras) {
+            let digitoverificarp = codigoBarras.charAt(0);
+            let digitoverificaru = codigoBarras.charAt(codigoBarras.length - 1);
+
+            if (digitoverificarp === '=' && !isNaN(digitoverificaru)) {
+                return codigoBarras.slice(1);
+            } else if ((digitoverificarp === 'B' || digitoverificarp === 'b') && !isNaN(digitoverificaru)) {
+                return codigoBarras.slice(0, -2) + '0' + codigoBarras.slice(-1);
+            } else {
+                return codigoBarras.slice(1, -1);
+            }
+        }
+
         document.getElementById('codigobarras').addEventListener('focusout', function() {
             const codigobarras = document.getElementById('codigobarras').value;
 
             if (codigobarras) {
-                pacotes.unshift({ codigobarras });
+                const codigobarrasFiltrado = filtrarCodigoBarras(codigobarras);
+                pacotes.unshift({ codigobarras, codigobarrasFiltrado });
                 atualizarListaPacotes();
                 document.getElementById('codigobarras').value = '';
                 document.getElementById('codigobarras').focus();
             } else {
-                alert('Por favor, preencha o campo de código de barras.');
+                //alert('Por favor, preencha o campo de código de barras.');
             }
         });
 

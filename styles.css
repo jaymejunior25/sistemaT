@@ -15,20 +15,20 @@ body {
     max-width: 1200px;
     margin: 50px auto;
     padding: 20px;
-    background-color: #c0f8f5;
+    background-color: #ffffff;
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 .container-custom2 {
-    max-width: 1200px;
+    max-width: 1800px;
     margin: 50px auto;
     padding: 20px;
-    background-color: #a88888;
+    background-color: #ffffff;
     border-radius: 8px;
-    box-shadow: 0 0 10px rgba(6, 95, 61, 0.1);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 .container-customlistas {
-    max-width: 1800px;
+    max-width: 1200px;
     margin: 50px auto;
     padding: 20px;
 

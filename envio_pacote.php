@@ -56,8 +56,8 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <link href="styles.css" rel="stylesheet">
 </head>
 <body>
-    <div class="container container-custom">
-        <h1 class="text-center mb-4" style="color: #28a745;">Enviar Amostras</h1>
+    <div class="container container-customlistas">
+        <h1 class="text-center mb-4" >Enviar Amostras</h1>
         <?php if (isset($_SESSION['success_message'])): ?>
             <div class="alert alert-success">
                 <?php echo $_SESSION['success_message']; unset($_SESSION['success_message']); ?>
@@ -70,7 +70,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <?php endif; ?>
         <form method="POST" action="" onsubmit="return confirmAction(event)">
             <div class="form-group">
-                <label for="pacotes" style="color: #28a745;">Pacotes Cadastrados:</label>
+                <label for="pacotes" >Pacotes Cadastrados:</label>
                 <div class="table-responsive">
                     <table class="table table-bordered table-hover table-striped">
                         <thead class="theadfixed">

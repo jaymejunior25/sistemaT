@@ -6,12 +6,14 @@ if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit();
 }
-
+//A106368320B   A106368303B A106368354B A106368354B A106368338B A106368346B A106368311B A106368311B 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $pacotes = json_decode($_POST['pacotes'], true); // Recebe pacotes como JSON
 
     $usuario_cadastro_id = $_SESSION['user_id'];
     $local_id = $_SESSION['unidade_id'];
+
+    $ids_laboratorios = [];
 
     foreach ($pacotes as $pacote) {
         $descricao = $pacote['descricao'];
@@ -29,7 +31,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $codigobarras = substr_replace($codigobarras, '0', -2, 1);
             // Extrair o penúltimo dígito do código de barras
             $penultimo_digito = substr($codigobarras, -2, 1);
-        } else {
+        } elseif(($digitoverificarp == 'A' || $digitoverificarp == 'a')&& ($digitoverificaru == 'B' || $digitoverificaru == 'b')) {
+            $codigobarras = substr($codigobarras, 1, -1);
+            $doisultimos_digitos = substr($codigobarras, -2);
+        }else {
             $codigobarras = substr($codigobarras, 1, -1);
             // Extrair o penúltimo dígito do código de barras
             $penultimo_digito = substr($codigobarras, -2, 1);
@@ -39,12 +44,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $digito_a_utilizar = ($digitoverificarp == '=' && ctype_digit($digitoverificaru)) ? $doisultimos_digitos : $penultimo_digito;
 
         // Consultar o ID do laboratório correspondente ao dígito
-        $stmt = $dbconn->prepare("SELECT id FROM laboratorio WHERE digito = :digito");
+        $stmt = $dbconn->prepare("SELECT * FROM laboratorio WHERE digito = :digito");
         $stmt->execute([':digito' => $digito_a_utilizar]);
         $lab = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($lab) {
             $laboratorio_id = $lab['id'];
+            $ids_laboratorios[] = $laboratorio_id;
 
             // Inserir o novo pacote no banco de dados
             $stmt = $dbconn->prepare("INSERT INTO pacotes (descricao, codigobarras, usuario_cadastro_id, unidade_cadastro_id, data_cadastro, lab_id ) VALUES (:descricao, :codigobarras, :usuario_cadastro_id, :unidade_cadastro_id, NOW(), :lab_id)");
@@ -58,6 +64,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 
-    echo json_encode(['status' => 'success', 'message' => 'Pacotes cadastrados com sucesso!']);
+    echo json_encode(['status' => 'success', 'message' => 'Pacotes cadastrados com sucesso!', 'labs' => $ids_laboratorios]);
 }
 ?>

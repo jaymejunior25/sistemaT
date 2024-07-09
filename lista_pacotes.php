@@ -149,7 +149,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-    <div class="container container-customlistas">
+    <div class="container container-custom2">
         <h1 class="text-center mb-4" style="color: #28a745;">Listar Pacotes</h1>
         <a href="cadastro_pacote.php" class="btn btn-custom"><i class="fas fa-plus"></i> Cadastar Amostras</a>
         <form method="GET" action="" class="form-inline mb-4 justify-content-center">

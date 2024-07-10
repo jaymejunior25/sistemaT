@@ -10,7 +10,7 @@ if (!isset($_SESSION['user_id'])) {
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $pacotes = json_decode($_POST['pacotes'], true);
     $laboratorio_id = $_POST['laboratorio_id'];
-    $laboratorioM_id = 20;
+    $laboratorioM_d = "20";
 
     foreach ($pacotes as $pacote) {
         $codigobarras = $pacote['codigobarras'];
@@ -21,20 +21,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         if (($digitoverificarp === 'A' || $digitoverificarp === 'a') && ($digitoverificaru === 'B' || $digitoverificaru === 'b')) {
             $codigobarras = substr($codigobarras, 1, -1);
-        } else {
+        } else{
             echo json_encode(['status' => 'error', 'message' => 'Código de barras inválido para LABMASTER.']);
             exit();
         }
 
         // Verificar se o pacote tem status "enviado"
-        $stmt = $dbconn->prepare("SELECT * FROM pacotes WHERE codigobarras = :codigobarras AND lab_id = :laboratorio_id");
-        $stmt->execute([':codigobarras' => $codigobarras, ':laboratorio_id' => $laboratorioM_id]);
+        $stmt = $dbconn->prepare("SELECT * FROM pacotes WHERE codigobarras = :codigobarras ");
+        $stmt->execute([':codigobarras' => $codigobarras]);
         $pacote = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($pacote && $pacote['status'] === 'enviado') {
-            $stmt = $dbconn->prepare("UPDATE pacotes SET data_recebimento = NOW(), status = 'recebido', lab_id = :laboratorio_id , usuario_recebimento_id = :usuario_recebimento_id WHERE codigobarras = :codigobarras");
+         // Consultar o ID do laboratório correspondente ao dígito
+          $stmt = $dbconn->prepare("SELECT * FROM laboratorio WHERE digito = :digito");
+          $stmt->execute([':digito' => $laboratorio_id]);
+          $lab = $stmt->fetch(PDO::FETCH_ASSOC);
+         
+          if ($lab) {
+              $laboratorioL_id = $lab['id'];
+              
+          }
+          
+        if ($pacote) {
+            
+            $stmt = $dbconn->prepare("UPDATE pacotes SET data_recebimento = NOW(), status = 'recebido', lab_id = :laboratorio_id AS usuario_recebimento_id = :usuario_recebimento_id WHERE codigobarras = :codigobarras");
             $stmt->execute([
-                ':laboratorio_id' => $laboratorio_id,
+                ':laboratorio_id' => $laboratorioL_id,
                 ':usuario_recebimento_id' => $_SESSION['user_id'],
                 ':codigobarras' => $codigobarras
             ]);

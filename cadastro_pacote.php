@@ -34,7 +34,7 @@
             <i class="fas fa-sign-out-alt"></i> Logout
         </a>
     </div>
-    <div class="fixed-bottom toggle-footer cursor_to_down" id="footer_fixed" >
+    <div class="fixed-bottom toggle-footer cursor_to_down" id="footer_fixed">
         <div class="fixed-bottom border-top bg-light text-center footer-content p-2" style="z-index:4;">
             <div class="footer-text">
                 Desenvolvido com &#128151; por Gerencia de Informatica - GETIN <br>
@@ -56,24 +56,13 @@
                 return codigoBarras.slice(1);
             } else if ((digitoverificarp === 'B' || digitoverificarp === 'b') && !isNaN(digitoverificaru)) {
                 return codigoBarras.slice(0, -2) + '0' + codigoBarras.slice(-1);
+            } else if ((digitoverificarp === 'A' || digitoverificarp === 'a') && (digitoverificaru === 'B' || digitoverificaru === 'b')) {
+                return codigoBarras.slice(1, -1);
             } else {
                 return codigoBarras.slice(1, -1);
             }
         }
-        // Função para obter o nome do laboratório via AJAX
-        function obterNomeLaboratorio(lab_id) {
-            return fetch('get_nomeLab.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: 'lab_id=' + encodeURIComponent(lab_id)
-            })
-            .then(response => response.json())
-            .then(data => data.nomeLaboratorio)
-            .catch(error => console.error('Erro ao obter o nome do laboratório:', error));
-        }
-        
+
         document.getElementById('codigobarras').addEventListener('focusout', function() {
             const descricao = document.getElementById('descricao').value;
             const codigobarras = document.getElementById('codigobarras').value;
@@ -106,17 +95,8 @@
             .then(data => {
                 if (data.status === 'success') {
                     alert(data.message);
-                    const labs = data.labs;
-
-                    // Atualizar os pacotes com os nomes dos laboratórios
-                    Promise.all(labs.map(lab_id => obterNomeLaboratorio(lab_id)))
-                        .then(nomesLaboratorios => {
-                            pacotes.forEach((pacote, index) => {
-                                pacote.laboratorio_nome = nomesLaboratorios[index];
-                            });
-                            atualizarListaPacotes();
-                        });
                     pacotes = [];
+                    atualizarListaPacotes();
                 } else {
                     alert('Erro ao cadastrar pacotes.');
                 }
@@ -131,7 +111,7 @@
                 const item = document.createElement('div');
                 item.className = 'alert alert-secondary d-flex justify-content-between align-items-center';
                 item.innerHTML = `
-                    <span>Descrição: ${pacote.descricao}, Código de Barras: ${pacote.codigobarrasFiltrado}, Nome do Laboratório: ${pacote.laboratorio_nome || ''}</span>
+                    <span>Descrição: ${pacote.descricao}, Código de Barras: ${pacote.codigobarrasFiltrado}</span>
                     <button class="btn btn-danger btn-sm" onclick="removerPacote(${index})">Excluir</button>
                 `;
                 lista.appendChild(item);
@@ -142,6 +122,27 @@
             pacotes.splice(index, 1);
             atualizarListaPacotes();
         }
+
+        let inactivityTime = function () {
+            let time;
+            window.onload = resetTimer;
+            document.onmousemove = resetTimer;
+            document.onkeypress = resetTimer;
+            document.onscroll = resetTimer;
+            document.onclick = resetTimer;
+
+            function logout() {
+                alert("Você foi desconectado devido à inatividade.");
+                window.location.href = 'logout.php';
+            }
+
+            function resetTimer() {
+                clearTimeout(time);
+                time = setTimeout(logout, 900000);  // Tempo em milissegundos 900000 = (15 minutos)
+            }
+        };
+
+        inactivityTime();
     </script>
 </body>
 </html>

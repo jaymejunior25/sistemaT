@@ -76,6 +76,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <a style="color: #fff;"href="envio_pacote.php"><i class="fas fa-paper-plane"></i> Enviar Amostras</a>
         <?php if ($_SESSION['user_type'] === 'admin' || $_SESSION['unidade_id'] === '1'): ?>
             <a style="color: #fff;" href="recebimento.php"><i class="fas fa-inbox"></i> Receber Amostras</a>
+            <a style="color: #fff;" href="recebimento_LABMASTER.php"><i class="fas fa-vials"></i> Receber Amostras LABMASTER</a>
         <?php endif; ?>
 
         <?php if ($_SESSION['user_type'] === 'admin'): ?>
@@ -97,7 +98,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <h2 class="text-center mb-4" style="color: #fff;">Você está logado como um Usuário: <?php echo ucfirst($user_type); ?></h2>
         </div>
 
-        <h2 class="text-center mb-4"style="color: rgb(38, 168, 147);">Amostras no Local</h2>
+        <h2 class="text-center mb-4"style="color: rgb(38, 168, 147);"><i class="fas fa-vial"></i> Amostras no Local</h2>
         <div class="table-wrapper" style="position: relative;" id="managerTable">
             <table class="table table-bordered table-hover table-striped">
                 <thead class="theadfixed">

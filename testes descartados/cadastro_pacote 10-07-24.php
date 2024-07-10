@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Receber Pacote</title>
+    <title>Cadastrar Pacote</title>
     <link rel="icon" type="image/png" href="icon2.png" sizes="32x32" />
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="styles.css" rel="stylesheet">
@@ -11,18 +11,22 @@
 </head>
 <body>
     <div class="container container-customlistas">
-        <h1 class="text-center mb-4" style="color: #28a745;">Receber Amostra</h1>
+        <h1 class="text-center mb-4" style="color: #28a745;">Cadastrar Amostra</h1>
         <?php if (isset($mensagem)): ?>
             <div class="alert alert-success"><?php echo $mensagem; ?></div>
         <?php endif; ?>
         <form id="pacoteForm">
+            <div class="form-group">
+                <label for="descricao" style="color: #28a745;">Descrição:</label>
+                <input type="text" name="descricao" id="descricao" class="form-control" required>
+            </div>
             <div class="form-group">
                 <label for="codigobarras" style="color: #28a745;">Código de Barras:</label>
                 <input type="text" name="codigobarras" id="codigobarras" class="form-control" required>
             </div>
         </form>
         <div id="pacotesList" class="mt-3"></div>
-        <button type="button" id="receberTodos" class="btn btn-success btn-block mt-3"><i class="fas fa-check"></i>Receber Todos</button>
+        <button type="button" id="cadastrarTodos" class="btn btn-success btn-block mt-3"><i class="fas fa-check"></i>Cadastrar Todos</button>
         <div class="text-center mt-3">
             <a href="index.php" class="btn btn-secondary"><i class="fas fa-angle-left"></i> Voltar</a>
         </div>
@@ -30,7 +34,7 @@
             <i class="fas fa-sign-out-alt"></i> Logout
         </a>
     </div>
-    <div class="fixed-bottom toggle-footer cursor_to_down" id="footer_fixed">
+    <div class="fixed-bottom toggle-footer cursor_to_down" id="footer_fixed" >
         <div class="fixed-bottom border-top bg-light text-center footer-content p-2" style="z-index:4;">
             <div class="footer-text">
                 Desenvolvido com &#128151; por Gerencia de Informatica - GETIN <br>
@@ -56,28 +60,42 @@
                 return codigoBarras.slice(1, -1);
             }
         }
-
+        // Função para obter o nome do laboratório via AJAX
+        function obterNomeLaboratorio(lab_id) {
+            return fetch('get_nomeLab.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: 'lab_id=' + encodeURIComponent(lab_id)
+            })
+            .then(response => response.json())
+            .then(data => data.nomeLaboratorio)
+            .catch(error => console.error('Erro ao obter o nome do laboratório:', error));
+        }
+        
         document.getElementById('codigobarras').addEventListener('focusout', function() {
+            const descricao = document.getElementById('descricao').value;
             const codigobarras = document.getElementById('codigobarras').value;
 
-            if (codigobarras) {
+            if (descricao && codigobarras) {
                 const codigobarrasFiltrado = filtrarCodigoBarras(codigobarras);
-                pacotes.unshift({ codigobarras, codigobarrasFiltrado });
+                pacotes.unshift({ descricao, codigobarras, codigobarrasFiltrado });
                 atualizarListaPacotes();
                 document.getElementById('codigobarras').value = '';
                 document.getElementById('codigobarras').focus();
             } else {
-                //alert('Por favor, preencha o campo de código de barras.');
+                //alert('Por favor, preencha todos os campos.');
             }
         });
 
-        document.getElementById('receberTodos').addEventListener('click', function() {
+        document.getElementById('cadastrarTodos').addEventListener('click', function() {
             if (pacotes.length === 0) {
-                alert('Nenhum pacote para receber.');
+                alert('Nenhum pacote para cadastrar.');
                 return;
             }
 
-            fetch('processar_pacotesR.php', {
+            fetch('processar_pacotesC.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded'
@@ -88,10 +106,19 @@
             .then(data => {
                 if (data.status === 'success') {
                     alert(data.message);
+                    const labs = data.labs;
+
+                    // Atualizar os pacotes com os nomes dos laboratórios
+                    Promise.all(labs.map(lab_id => obterNomeLaboratorio(lab_id)))
+                        .then(nomesLaboratorios => {
+                            pacotes.forEach((pacote, index) => {
+                                pacote.laboratorio_nome = nomesLaboratorios[index];
+                            });
+                            atualizarListaPacotes();
+                        });
                     pacotes = [];
-                    atualizarListaPacotes();
                 } else {
-                    alert('Erro ao receber pacotes.');
+                    alert('Erro ao cadastrar pacotes.');
                 }
             });
         });
@@ -104,7 +131,7 @@
                 const item = document.createElement('div');
                 item.className = 'alert alert-secondary d-flex justify-content-between align-items-center';
                 item.innerHTML = `
-                    <span>Código de Barras: ${pacote.codigobarrasFiltrado}</span>
+                    <span>Descrição: ${pacote.descricao}, Código de Barras: ${pacote.codigobarrasFiltrado}, Nome do Laboratório: ${pacote.laboratorio_nome || ''}</span>
                     <button class="btn btn-danger btn-sm" onclick="removerPacote(${index})">Excluir</button>
                 `;
                 lista.appendChild(item);
@@ -114,9 +141,10 @@
         function removerPacote(index) {
             pacotes.splice(index, 1);
             atualizarListaPacotes();
+
         }
 
-        let inactivityTime = function () {
+          let inactivityTime = function () {
             let time;
             window.onload = resetTimer;
             document.onmousemove = resetTimer;

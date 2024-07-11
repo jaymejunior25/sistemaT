@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,7 +11,10 @@
 </head>
 <body>
     <div class="container container-customlistas">
-        <h1 class="text-center mb-4" style="color: #28a745;">Receber Pacote</h1>
+        <h1 class="text-center mb-4" style="color: #28a745;">Receber Amostra</h1>
+        <?php if (isset($mensagem)): ?>
+            <div class="alert alert-success"><?php echo $mensagem; ?></div>
+        <?php endif; ?>
         <form id="pacoteForm">
             <div class="form-group">
                 <label for="codigobarras" style="color: #28a745;">Código de Barras:</label>
@@ -60,10 +62,12 @@
 
             if (codigobarras) {
                 const codigobarrasFiltrado = filtrarCodigoBarras(codigobarras);
-                pacotes.unshift({ codigobarras,codigobarrasFiltrado });
+                pacotes.unshift({ codigobarras, codigobarrasFiltrado });
                 atualizarListaPacotes();
                 document.getElementById('codigobarras').value = '';
                 document.getElementById('codigobarras').focus();
+            } else {
+                //alert('Por favor, preencha o campo de código de barras.');
             }
         });
 
@@ -87,7 +91,7 @@
                     pacotes = [];
                     atualizarListaPacotes();
                 } else {
-                    alert(data.message);
+                    alert('Erro ao receber pacotes.');
                 }
             });
         });

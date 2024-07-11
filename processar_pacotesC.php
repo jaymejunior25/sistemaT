@@ -41,6 +41,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             // Verificar qual dígito usar: os dois últimos ou o penúltimo
             $digito_a_utilizar = ($digitoverificarp == '=' && ctype_digit($digitoverificaru)) || (($digitoverificarp == 'A' || $digitoverificarp == 'a') && ($digitoverificaru == 'B' || $digitoverificaru == 'b')) ? $doisultimos_digitos : $penultimo_digito;
 
+
+            // Verificar se o código de barras já existe no banco de dados
+            /*$stmt = $dbconn->prepare("SELECT * FROM pacotes WHERE codigobarras = :codigobarras");
+            $stmt->execute([':codigobarras' => $codigobarras]);
+            $pacote_existente = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($pacote_existente) {
+                echo json_encode(['status' => 'error', 'message' => 'Pacote com código de barras ' . $codigobarras . ' já existe no banco de dados.']);
+                exit();
+            }*/
+
             // Consultar o ID do laboratório correspondente ao dígito
             $stmt = $dbconn->prepare("SELECT * FROM laboratorio WHERE digito = :digito");
             $stmt->execute([':digito' => $digito_a_utilizar]);

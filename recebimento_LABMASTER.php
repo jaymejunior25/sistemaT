@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Receber Pacote LABMASTER</title>
+    <title>Receber Pacote</title>
     <link rel="icon" type="image/png" href="icon2.png" sizes="32x32" />
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="styles.css" rel="stylesheet">
@@ -11,8 +12,8 @@
 </head>
 <body>
     <div class="container container-customlistas">
-        <h1 class="text-center mb-4" style="color: #28a745;">Receber Amostra LABMASTER</h1>
-        <form id="laboratorioForm">
+        <h1 class="text-center mb-4" style="color: #28a745;">Receber Pacote</h1>
+        <form id="pacoteForm">
             <div class="form-group">
                 <label for="laboratorio" style="color: #28a745;">Selecione o Laboratório:</label>
                 <select id="laboratorio" class="form-control" required>
@@ -21,8 +22,6 @@
                     <option value="23">GERIM</option>
                 </select>
             </div>
-        </form>
-        <form id="pacoteForm">
             <div class="form-group">
                 <label for="codigobarras" style="color: #28a745;">Código de Barras:</label>
                 <input type="text" name="codigobarras" id="codigobarras" class="form-control" required>
@@ -51,17 +50,18 @@
     <script>
         let pacotes = [];
 
+
+
         document.getElementById('codigobarras').addEventListener('focusout', function() {
             const codigobarras = document.getElementById('codigobarras').value;
-            const laboratorio_id = document.getElementById('laboratorio').value;
+            const laboratorio = document.getElementById('laboratorio').value;
 
             if (codigobarras) {
-                pacotes.unshift({ codigobarras, laboratorio_id });
+
+                pacotes.unshift({ codigobarras, laboratorio });
                 atualizarListaPacotes();
                 document.getElementById('codigobarras').value = '';
                 document.getElementById('codigobarras').focus();
-            } else {
-                //alert('Por favor, preencha o campo de código de barras.');
             }
         });
 
@@ -71,14 +71,12 @@
                 return;
             }
 
-            const laboratorio_id = document.getElementById('laboratorio').value;
-
             fetch('processarRlabmaster.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded'
                 },
-                body: 'pacotes=' + encodeURIComponent(JSON.stringify(pacotes)) + '&laboratorio_id=' + laboratorio_id
+                body: 'pacotes=' + encodeURIComponent(JSON.stringify(pacotes))
             })
             .then(response => response.json())
             .then(data => {
@@ -111,7 +109,7 @@
             pacotes.splice(index, 1);
             atualizarListaPacotes();
         }
-        
+
         let inactivityTime = function () {
             let time;
             window.onload = resetTimer;

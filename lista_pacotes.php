@@ -7,7 +7,7 @@ if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit();
 }
-if ($_SESSION['user_type'] != 'admin') {
+if ($_SESSION['unidade_id'] != '1' && $_SESSION['user_type'] != 'admin') {
     header('Location: index.php');
     exit();
 }
@@ -101,9 +101,6 @@ if (!empty($searchType) && !empty($searchQuery)) {
         case 'usuario_recebimento':
             $conditions[] = "u_recebimento.usuario LIKE :query";
             break;
-        case 'unidade_cadastro':
-            $conditions[] = "l_cadastro.nome LIKE :query";
-            break;
         case 'unidade_envio':
             $conditions[] = "l_envio.nome LIKE :query";
             break;
@@ -181,7 +178,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <option value="usuario_cadastro" <?php if ($searchType == 'usuario_cadastro') echo 'selected'; ?>>Usuário que Cadastrou</option>
                     <option value="usuario_envio" <?php if ($searchType == 'usuario_envio') echo 'selected'; ?>>Usuário que Enviou</option>
                     <option value="usuario_recebimento" <?php if ($searchType == 'usuario_recebimento') echo 'selected'; ?>>Usuário que Recebeu</option>
-                    <option value="unidade_cadastro" <?php if ($searchType == 'unidade_cadastro') echo 'selected'; ?>>Unidade que Cadastrou</option>
+
                     <option value="unidade_envio" <?php if ($searchType == 'unidade_envio') echo 'selected'; ?>>Unidade que Enviou</option>
                     <option value="data_cadastro" <?php if ($searchType == 'data_cadastro') echo 'selected'; ?>>Data de Cadastro</option>
                     <option value="data_envio" <?php if ($searchType == 'data_envio') echo 'selected'; ?>>Data de Envio</option>
@@ -207,7 +204,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <th>Data d<br>e Cadastro</th>
                         <th>Data de <br>Envio</th>
                         <th>Data de <br> Recebimento</th>
-                        <th>Local de <br>Cadastro</th>
+                       <!-- <th>Local de <br>Cadastro</th> -->
                         <th>Local de<br> Envio</th>
                         <th>Cadastrado por</th>
                         <th>Enviado por</th>
@@ -234,7 +231,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <td><?php echo htmlspecialchars(date("d-m-Y", strtotime($pacote['data_cadastro']))); ?></td> 
                                 <td><?php if($pacote['data_envio']) {echo htmlspecialchars(date("d-m-Y", strtotime($pacote['data_envio'])));}; ?></td>
                                 <td><?php if($pacote['data_recebimento']) {echo htmlspecialchars(date("d-m-Y", strtotime($pacote['data_recebimento'])));}; ?></td>
-                                <td><?php echo htmlspecialchars($pacote['cadastro_nome']); ?></td>
+                                <!-- <td><?php echo htmlspecialchars($pacote['cadastro_nome']); ?></td> -->
                                 <td><?php echo htmlspecialchars($pacote['envio_nome']); ?></td>
                                 <td><?php echo htmlspecialchars($pacote['cadastrado_por']); ?></td>
                                 <td><?php echo htmlspecialchars($pacote['enviado_por']); ?></td>

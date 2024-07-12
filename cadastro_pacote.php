@@ -98,7 +98,7 @@
                     pacotes = [];
                     atualizarListaPacotes();
                 } else {
-                    alert('Erro ao cadastrar pacotes.');
+                    alert(data.message);
                 }
             });
         });

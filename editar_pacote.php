@@ -14,7 +14,7 @@ if ($_SESSION['user_type'] != 'admin') {
 
 // Verificar se o ID do pacote foi passado pela URL
 if (!isset($_GET['id'])) {
-    header('Location: listar_pacotes.php');
+    header('Location: lista_pacotes.php');
     exit();
 }
 
@@ -26,7 +26,7 @@ $stmt->execute([':id' => $pacote_id]);
 $pacote = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$pacote) {
-    header('Location: listar_pacotes.php');
+    header('Location: lista_pacotes.php');
     exit();
 }
 
@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         ':id' => $pacote_id
     ]);
 
-    header('Location: listar_pacotes.php');
+    header('Location: lista_pacotes.php');
     exit();
 }
 ?>

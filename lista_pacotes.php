@@ -209,7 +209,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <th>Cadastrado por</th>
                         <th>Enviado por</th>
                         <th>Recebido por</th>
-                        <th>Ações</th>
+                        <?php if ($_SESSION['user_type'] === 'admin'): ?><th>Ações</th><?php endif; ?>
                     </tr>
                 </thead>
                 <tbody>
@@ -236,10 +236,10 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <td><?php echo htmlspecialchars($pacote['cadastrado_por']); ?></td>
                                 <td><?php echo htmlspecialchars($pacote['enviado_por']); ?></td>
                                 <td><?php echo htmlspecialchars($pacote['recebido_por']); ?></td>
-                                <td>
+                                 <?php if ($_SESSION['user_type'] === 'admin'): ?><td>
                                     <a href="editar_pacote.php?id=<?php echo $pacote['id']; ?>" class="btn btn-primary btn-sm">Editar</a>
                                     <button type="button"  class="btn btn-danger btn-sm" onclick="openDeleteModal(<?php echo $pacote['id']; ?>)">Excluir</button>
-                                </td>
+                                </td><?php endif; ?>
                                 
                             </tr>
                         <?php endforeach; ?>

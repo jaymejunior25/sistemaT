@@ -98,10 +98,9 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </div>
     <div class="content">
         <div class="container container-custom"  style="background-color: rgb(38, 168, 147);">
-            <h1 class="text-center mb-4" style="color: #fff;">Bem-vindo ao Sistema de Gerenciamento de Envios e Recebimentos <?php echo ucfirst($user_name); ?></h1>
-            <h2 class="text-center mb-4" style="color: #fff;">Você está logado como um Usuário: <?php echo ucfirst($user_type); ?></h2>
+            <h1 class="text-center mb-4" style="color: #fff;">Bem-vindo ao Sistema de Gerenciamento de Envios e Recebimentos de Amostras: <?php echo ucfirst($user_name); ?></h1>
+            <h2 class="text-center mb-4" style="color: #fff;">Você está logado como um Usuário Classe: <?php echo ucfirst($user_type); ?></h2>
         </div>
-
         <h2 class="text-center mb-4"style="color: rgb(38, 168, 147);"><i class="fas fa-vial"></i> Amostras no Local</h2>
         <div class="table-wrapper" style="position: relative;" id="managerTable">
             <table class="table table-bordered table-hover table-striped">

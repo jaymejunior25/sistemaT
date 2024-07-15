@@ -62,8 +62,11 @@
                 return codigoBarras.slice(1);
             } else if ((digitoverificarp === 'B' || digitoverificarp === 'b') && !isNaN(digitoverificaru)) {
                 return codigoBarras.slice(0, -2) + '0' + codigoBarras.slice(-1);
-            } else {
+            } else if ((digitoverificarp === 'A' || digitoverificarp === 'A') && (digitoverificaru === 'A' || digitoverificaru === 'a')){
                 return codigoBarras.slice(1, -1);
+            }
+            else{
+                return codigoBarras;
             }
         }
 

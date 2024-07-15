@@ -23,19 +23,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $digitoverificarp = substr($codigobarras, 0, 1);
         $digitoverificaru = substr($codigobarras, -1);
 
-        if (($digitoverificarp == 'A' || $digitoverificarp == 'a') && ($digitoverificaru == 'B' || $digitoverificaru == 'b')) {
+        if (($digitoverificarp === 'A' || $digitoverificarp === 'a') && ($digitoverificaru === 'B' || $digitoverificaru === 'b')) {
             $doisultimos_digitos = 20; // ID do laboratório LABMASTER
             $codigobarras = substr($codigobarras, 1, -1); // Remove o primeiro e o último dígito
         } else {
-            if ($digitoverificarp == '=' && ctype_digit($digitoverificaru)) {
+            if ($digitoverificarp === '=' && ctype_digit($digitoverificaru)) {
                 $codigobarras = substr($codigobarras, 1);
                 $doisultimos_digitos = substr($codigobarras, -2);
-            } elseif (($digitoverificarp == 'B' || $digitoverificarp == 'b') && ctype_digit($digitoverificaru)) {
+            } elseif (($digitoverificarp === 'B' || $digitoverificarp === 'b') && ctype_digit($digitoverificaru)) {
                 $codigobarras = substr_replace($codigobarras, '0', -2, 1);
                 $penultimo_digito = substr($codigobarras, -2, 1);
-            } else {
+            } elseif (($digitoverificarp === 'A' || $digitoverificarp === 'a') && ($digitoverificaru === 'A' || $digitoverificaru === 'A')){
                 $codigobarras = substr($codigobarras, 1, -1);
                 $penultimo_digito = substr($codigobarras, -2, 1);
+            }
+            else {
+                if(strlen($codigobarras) == 9){
+                    $doisultimos_digitos = 20; // ID do laboratório LABMASTER
+                }else{
+                    $penultimo_digito = substr($codigobarras, -2, 1);
+                }
+                
             }
         }
             // Verificar qual dígito usar: os dois últimos ou o penúltimo

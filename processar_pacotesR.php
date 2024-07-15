@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } elseif ((($digitoverificarp === 'B') || ($digitoverificarp === 'b')) && ctype_digit($digitoverificaru)) {
             $codigobarras = substr_replace($codigobarras, '0', -2, 1);
             $penultimo_digito = substr($codigobarras, -2, 1);
-        } else {
+        } elseif (($digitoverificarp === 'A' || $digitoverificarp === 'a') && ($digitoverificaru === 'A' || $digitoverificaru === 'A')) {
             $codigobarras = substr($codigobarras, 1, -1);
             $penultimo_digito = substr($codigobarras, -2, 1);
         }

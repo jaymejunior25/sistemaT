@@ -58,12 +58,15 @@
                 return codigoBarras.slice(0, -2) + '0' + codigoBarras.slice(-1);
             } else if ((digitoverificarp === 'A' || digitoverificarp === 'a') && (digitoverificaru === 'B' || digitoverificaru === 'b')) {
                 return codigoBarras.slice(1, -1);
-            } else if ((digitoverificarp === 'A' || digitoverificarp === 'A') && (digitoverificaru === 'A' || digitoverificaru === 'a')){
+            } else if ((digitoverificarp === 'A' || digitoverificaru === 'A') && (digitoverificaru === 'A' || digitoverificaru === 'a')) {
                 return codigoBarras.slice(1, -1);
-            }
-            else{
+            } else {
                 return codigoBarras;
             }
+        }
+
+        function codigoBarrasDuplicado(codigobarrasFiltrado) {
+            return pacotes.some(pacote => pacote.codigobarrasFiltrado === codigobarrasFiltrado);
         }
 
         document.getElementById('codigobarras').addEventListener('focusout', function() {
@@ -72,12 +75,18 @@
 
             if (descricao && codigobarras) {
                 const codigobarrasFiltrado = filtrarCodigoBarras(codigobarras);
+
+                if (codigoBarrasDuplicado(codigobarrasFiltrado)) {
+                    alert('Código de barras duplicado.');
+                    document.getElementById('codigobarras').value = '';
+                    document.getElementById('codigobarras').focus();
+                    return;
+                }
+
                 pacotes.unshift({ descricao, codigobarras, codigobarrasFiltrado });
                 atualizarListaPacotes();
                 document.getElementById('codigobarras').value = '';
                 document.getElementById('codigobarras').focus();
-            } else {
-                //alert('Por favor, preencha todos os campos.');
             }
         });
 
@@ -95,8 +104,7 @@
                 body: 'pacotes=' + encodeURIComponent(JSON.stringify(pacotes))
             })
             .then(response => response.json())
-            .then(data => {
-                
+            
                 if (data.status === 'success') {
                     alert(data.message);
                     pacotes = [];
@@ -105,7 +113,7 @@
                     alert('Erro ao cadastrar pacotes.');
                 }
             });
-        });
+
 
         function atualizarListaPacotes() {
             const lista = document.getElementById('pacotesList');

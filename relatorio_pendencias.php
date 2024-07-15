@@ -128,13 +128,13 @@ if (!empty($searchType) && !empty($searchQuery)) {
             $conditions[] = "l_envio.nome LIKE :query";
             break;
         case 'data_cadastro':
-            $conditions[] = "TO_CHAR(p.data_cadastro, 'YYYY-MM-DD') LIKE :query";
+            $conditions[] = "TO_CHAR(p.data_cadastro, 'DD-MM-YYYY') LIKE :query";
             break;
         case 'data_envio':
-            $conditions[] = "TO_CHAR(p.data_envio, 'YYYY-MM-DD') LIKE :query";
+            $conditions[] = "TO_CHAR(p.data_envio, 'DD-MM-YYYY') LIKE :query";
             break;
         case 'data_recebimento':
-            $conditions[] = "TO_CHAR(p.data_recebimento, 'YYYY-MM-DD') LIKE :query";
+            $conditions[] = "TO_CHAR(p.data_recebimento, 'DD-MM-YYYY') LIKE :query";
             break;
         case 'lab_nome':
             $conditions[] = "l_lab.nome LIKE :query";
@@ -189,7 +189,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <div class="form-check">
                         <?php foreach ($available_columns as $column => $label): ?>
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="checkbox" name="columns[]" id="column_<?php echo $column; ?>" value="<?php echo $column; ?>" <?php if (in_array($column, $colunas_selecionadas)) echo 'checked'; ?>>
+                                <input class="form-check-input" type="checkbox" name="columns[]" id="column_<?php echo $column; ?>" value="<?php echo $column; ?>" checked <?php if (in_array($column, $colunas_selecionadas)) echo 'checked'; ?>>
                                 <label class="form-check-label" for="column_<?php echo $column; ?>"><?php echo htmlspecialchars($label); ?></label>
                             </div>
                         <?php endforeach; ?>

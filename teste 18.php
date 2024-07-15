@@ -72,6 +72,14 @@
 
             if (descricao && codigobarras) {
                 const codigobarrasFiltrado = filtrarCodigoBarras(codigobarras);
+
+                // Verificar duplicidade na lista dinâmica
+                let duplicado = pacotes.some(pacote => pacote.codigobarrasFiltrado === codigobarrasFiltrado);
+                if (duplicado) {
+                    alert('Pacote com código de barras ' + codigobarrasFiltrado + ' já está na lista.');
+                    return;
+                }
+
                 pacotes.unshift({ descricao, codigobarras, codigobarrasFiltrado });
                 atualizarListaPacotes();
                 document.getElementById('codigobarras').value = '';
@@ -96,13 +104,13 @@
             })
             .then(response => response.json())
             .then(data => {
-                
                 if (data.status === 'success') {
                     alert(data.message);
                     pacotes = [];
                     atualizarListaPacotes();
                 } else {
-                    alert('Erro ao cadastrar pacotes.');
+                    // Mostrar todas as mensagens de erro
+                    alert(data.message.join("\n"));
                 }
             });
         });

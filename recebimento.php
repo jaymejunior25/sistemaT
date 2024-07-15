@@ -69,6 +69,9 @@
                 return codigoBarras;
             }
         }
+        function codigoBarrasDuplicado(codigobarrasFiltrado) {
+            return pacotes.some(pacote => pacote.codigobarrasFiltrado === codigobarrasFiltrado);
+        }
 
         document.getElementById('codigobarras').addEventListener('focusout', function() {
             const codigobarras = document.getElementById('codigobarras').value;
@@ -76,6 +79,12 @@
 
             if (codigobarras && laboratorio) {
                 const codigobarrasFiltrado = filtrarCodigoBarras(codigobarras);
+                if (codigoBarrasDuplicado(codigobarrasFiltrado)) {
+                    alert('Código de barras duplicado.');
+                    document.getElementById('codigobarras').value = '';
+                    document.getElementById('codigobarras').focus();
+                    return;
+                }
                 const pacote = {
                     codigobarras: codigobarras,
                     laboratorio: laboratorio,

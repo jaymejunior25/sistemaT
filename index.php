@@ -74,7 +74,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <h3 class="text-center" style="color: #fff;"><i class="fas fa-home"></i>Menu</h3>
         <a style="color: #fff;" href="cadastro_pacote.php"><i class="fas fa-plus"></i> Cadastrar Amostras</a>
         <a style="color: #fff;"href="envio_pacote.php"><i class="fas fa-paper-plane"></i> Enviar Amostras</a>
-        <?php if ($_SESSION['user_type'] === 'admin' || $_SESSION['unidade_id'] === '1'): ?>
+        <?php if ($_SESSION['user_type'] === 'admin' || $_SESSION['unidade_id'] == '1'): ?>
             <a style="color: #fff;" href="recebimento.php"><i class="fas fa-inbox"></i> Receber Amostras</a>
             <a style="color: #fff;" href="recebimento_LABMASTER.php"><i class="fas fa-vials"></i> Receber Amostras LABMASTER</a>
         <?php endif; ?>

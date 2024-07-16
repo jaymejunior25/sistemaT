@@ -8,28 +8,15 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $pacotes = json_decode($_POST['pacotes'], true);
+    $codigobarras = $_POST['codigobarras'];
+    $laboratorio = $_POST['laboratorio'];
 
-    $usuario_cadastro_id = $_SESSION['user_id'];
-    $local_id = $_SESSION['unidade_id'];
+    // Verificar se o pacote está com status "enviado"
+    $stmt = $dbconn->prepare("SELECT * FROM pacotes WHERE codigobarras = :codigobarras AND status = 'enviado'");
+    $stmt->execute([':codigobarras' => $codigobarras]);
+    $pacote_enviado = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    $ids_laboratorios = [];
-    $messages = [];
-
-    foreach ($pacotes as $pacote) {
-        $descricao = $pacote['descricao'];
-        $codigobarras = $pacote['codigobarras'];
-
-        // Verificar se o código de barras já existe no banco de dados
-        $stmt = $dbconn->prepare("SELECT * FROM pacotes WHERE codigobarras = :codigobarras");
-        $stmt->execute([':codigobarras' => $codigobarras]);
-        $pacote_existente = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($pacote_existente) {
-            $messages[] = 'Pacote com código de barras ' . $codigobarras . ' já existe no banco de dados.';
-            continue;
-        }
-
+    if ($pacote_enviado) {
         // Separa o primeiro e o último dígito do código de barras
         $digitoverificarp = substr($codigobarras, 0, 1);
         $digitoverificaru = substr($codigobarras, -1);
@@ -60,33 +47,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             // Verificar qual dígito usar: os dois últimos ou o penúltimo
             $digito_a_utilizar = ($digitoverificarp == '=' && ctype_digit($digitoverificaru)) || (($digitoverificarp == 'A' || $digitoverificarp == 'a') && ($digitoverificaru == 'B' || $digitoverificaru == 'b')) ? $doisultimos_digitos : $penultimo_digito;
             
-            // Consultar o ID do laboratório correspondente ao dígito
-            $stmt = $dbconn->prepare("SELECT * FROM laboratorio WHERE digito = :digito");
-            $stmt->execute([':digito' => $digito_a_utilizar]);
-            $lab = $stmt->fetch(PDO::FETCH_ASSOC);
+        // Verificar se o nome do laboratório do código de barras corresponde ao laboratório selecionado
+        $stmtLab = $dbconn->prepare("SELECT * FROM laboratorio WHERE digito = :digito");
+        $stmtLab->execute([':digito' =>  $digito_a_utilizar]);
+        $lab = $stmtLab->fetch(PDO::FETCH_ASSOC);
 
-            if ($lab) {
-                $laboratorio_id = $lab['id'];
-                $ids_laboratorios[] = $laboratorio_id;
-            }
-
-            // Inserir o novo pacote no banco de dados
-        $stmt = $dbconn->prepare("INSERT INTO pacotes (descricao, codigobarras, usuario_cadastro_id, unidade_cadastro_id, data_cadastro, lab_id) VALUES (:descricao, :codigobarras, :usuario_cadastro_id, :unidade_cadastro_id, NOW(), :lab_id)");
-        $stmt->execute([
-            ':descricao' => $descricao,
-            ':codigobarras' => $codigobarras,
-            ':usuario_cadastro_id' => $usuario_cadastro_id,
-            ':unidade_cadastro_id' => $local_id,
-            ':lab_id' => $laboratorio_id
-        ]);
-
-
-    }
-
-    if (empty($messages)) {
-        echo json_encode(['status' => 'success', 'message' => 'Pacotes cadastrados com sucesso!', 'labs' => $ids_laboratorios]);
+        if ($lab && $lab['nome'] === $laboratorio) {
+            echo json_encode(['status' => 'enviado']);
+        } else {
+            echo json_encode(['status' => 'nao_compativel']);
+        }
     } else {
-        echo json_encode(['status' => 'error', 'message' => $messages]);
+        echo json_encode(['status' => 'nao_enviado']);
     }
 }
 ?>

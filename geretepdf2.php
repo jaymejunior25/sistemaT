@@ -23,35 +23,58 @@ $conditions = [];
 $params = [];
 
 if ($filter == 'enviados') {
-    $conditions[] = "p.data_envio IS NOT NULL";
+    $conditions[] = "p.status = 'enviado'";
 } elseif ($filter == 'recebidos') {
-    $conditions[] = "p.data_recebimento IS NOT NULL";
+    $conditions[] = "p.status = 'recebido'";
 } elseif ($filter == 'cadastrado') {
-    $conditions[] = "p.data_cadastro IS NOT NULL";
+    $conditions[] = "p.status = 'cadastrado'";
 }
 
 if (!empty($local_id)) {
     $conditions[] = "p.unidade_envio_id = :local_id";
     $params[':local_id'] = $local_id;
 }
-
 if (!empty($searchType) && !empty($searchQuery)) {
-    $queryParam = '%' . $searchQuery . '%';
+    $queryParam = '%' . strtolower($searchQuery) . '%';
     switch ($searchType) {
         case 'codigobarras':
+
+            $codigobarras = $searchQuery;
+
+            // Separa o primeiro e o último dígito do código de barras
+            $digitoverificarp = substr($codigobarras, 0, 1);
+            $digitoverificaru = substr($codigobarras, -1);
+
+            if ($digitoverificarp == '=' && ctype_digit($digitoverificaru)) {
+                $codigobarras = substr($codigobarras, 1);
+                // Extrair os dois últimos dígitos do código de barras
+                $doisultimos_digitos = substr($codigobarras, -2);
+            } elseif ($digitoverificarp == 'B' || $digitoverificarp == 'b' && ctype_digit($digitoverificaru)) {
+                $codigobarras = substr_replace($codigobarras, '0', -2, 1);
+                // Extrair o penúltimo dígito do código de barras
+                $penultimo_digito = substr($codigobarras, -2, 1);
+            } elseif(($digitoverificarp == 'A' || $digitoverificarp == 'a')&& ($digitoverificaru == 'B' || $digitoverificaru == 'b')) {
+                $codigobarras = substr($codigobarras, 1, -1);
+                $doisultimos_digitos = substr($codigobarras, -2);
+            }else {
+                $codigobarras = substr($codigobarras, 1, -1);
+                // Extrair o penúltimo dígito do código de barras
+                $penultimo_digito = substr($codigobarras, -2, 1);
+            }
+            $queryParam = '%' . $codigobarras . '%';
             $conditions[] = "p.codigobarras LIKE :query";
             break;
         case 'usuario_cadastro':
-            $conditions[] = "u_cadastro.usuario LIKE :query";
+            $conditions[] = "LOWER(u_cadastro.usuario) LIKE :query";
             break;
         case 'usuario_envio':
-            $conditions[] = "u_envio.usuario LIKE :query";
+            $conditions[] = "LOWER(u_envio.usuario) LIKE :query";
             break;
         case 'usuario_recebimento':
-            $conditions[] = "u_recebimento.usuario LIKE :query";
+            $conditions[] = "LOWER(u_recebimento.usuario) LIKE :query";
             break;
         case 'unidade_envio':
-            $conditions[] = "l_envio.nome LIKE :query";
+            $conditions[] = "LOWER(l_envio.nome) LIKE :query";
             break;
         case 'data_cadastro':
             $conditions[] = "TO_CHAR(p.data_cadastro, 'DD-MM-YYYY') LIKE :query";
@@ -63,14 +86,13 @@ if (!empty($searchType) && !empty($searchQuery)) {
             $conditions[] = "TO_CHAR(p.data_recebimento, 'DD-MM-YYYY') LIKE :query";
             break;
         case 'lab_nome':
-            $conditions[] = "l_lab.nome LIKE :query";
+            $conditions[] = "LOWER(l_lab.nome) LIKE :query";
             break;  
         default:
             break;
     }
     $params[':query'] = $queryParam;
 }
-
 if (count($conditions) > 0) {
     $sql .= " WHERE " . implode(" AND ", $conditions);
 }
@@ -91,7 +113,7 @@ class PDF extends FPDF
         $this->Ln(5);
         $this->SetFont('Arial', 'B', 8);
         $this->Cell(30, 10, 'Codigo Barras', 1, 0, 'C');
-        $this->Cell(15, 10, 'Status', 1, 0, 'C');
+        $this->Cell(17, 10, 'Status', 1, 0, 'C');
         $this->Cell(30, 10, 'Descricao', 1, 0, 'C');
         $this->Cell(20, 10, 'Laboratorio', 1, 0, 'C');
         $this->Cell(23, 10, 'Cadastro', 1, 0, 'C');
@@ -120,7 +142,7 @@ $pdf->SetFont('Arial', '', 8);
 
 foreach ($pacotes as $pacote) {
     $pdf->Cell(30, 10, $pacote['codigobarras'], 1);
-    $pdf->Cell(15, 10, ucfirst($pacote['status']), 1);
+    $pdf->Cell(17, 10, ucfirst($pacote['status']), 1);
     $pdf->Cell(30, 10, $pacote['descricao'], 1);
     $pdf->Cell(20, 10, $pacote['lab_nome'], 1);
     $pdf->Cell(23, 10, date("d-m-Y", strtotime($pacote['data_cadastro'])), 1);

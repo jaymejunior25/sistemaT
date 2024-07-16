@@ -178,6 +178,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <option value="usuario_cadastro" <?php if ($searchType == 'usuario_cadastro') echo 'selected'; ?>>Usuário que Cadastrou</option>
                     <option value="usuario_envio" <?php if ($searchType == 'usuario_envio') echo 'selected'; ?>>Usuário que Enviou</option>
                     <option value="usuario_recebimento" <?php if ($searchType == 'usuario_recebimento') echo 'selected'; ?>>Usuário que Recebeu</option>
+
                     <option value="unidade_envio" <?php if ($searchType == 'unidade_envio') echo 'selected'; ?>>Unidade que Enviou</option>
                     <option value="data_cadastro" <?php if ($searchType == 'data_cadastro') echo 'selected'; ?>>Data de Cadastro</option>
                     <option value="data_envio" <?php if ($searchType == 'data_envio') echo 'selected'; ?>>Data de Envio</option>
@@ -188,16 +189,9 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <div class="form-group mr-3">
                 <label for="searchQuery" class="mr-2" style="color: #28a745;">Consulta:</label>
                 <input type="text" name="searchQuery" id="searchQuery" class="form-control" value="<?php echo htmlspecialchars($searchQuery); ?>">
+                
             </div>
             <button type="submit" class="btn btn-custom"><i class="fas fa-filter"></i> Filtrar</button>
-        </form>
-
-        <form method="GET" action="geretepdf2.php">
-            <input type="hidden" name="filter" value="<?php echo htmlspecialchars($filter); ?>">
-            <input type="hidden" name="local_id" value="<?php echo htmlspecialchars($local_id); ?>">
-            <input type="hidden" name="searchType" value="<?php echo htmlspecialchars($searchType); ?>">
-            <input type="hidden" name="searchQuery" value="<?php echo htmlspecialchars($searchQuery); ?>">
-            <button type="submit" class="btn btn-custom"><i class="fas fa-file-pdf"></i> Gerar PDF</button>
         </form>
         
         <div class="table-wrapper" style="position: relative;" id="managerTable">  

@@ -72,12 +72,13 @@ $sql = "SELECT p.id, p.status, p.codigobarras, p.descricao, p.data_envio, p.data
 $conditions = [];
 $params = [];
 
+
 if ($filter == 'enviados') {
-    $conditions[] = "p.data_envio IS NOT NULL";
+    $conditions[] = "p.status = 'enviado'";
 } elseif ($filter == 'recebidos') {
-    $conditions[] = "p.data_recebimento IS NOT NULL";
+    $conditions[] = "p.status = 'recebido'";
 } elseif ($filter == 'cadastrado') {
-    $conditions[] = "p.data_cadastro IS NOT NULL";
+    $conditions[] = "p.status = 'cadastrado'";
 }
 
 if (!empty($local_id)) {
@@ -86,7 +87,7 @@ if (!empty($local_id)) {
 }
 
 if (!empty($searchType) && !empty($searchQuery)) {
-    $queryParam = '%' . $searchQuery . '%';
+    $queryParam = '%' . strtolower($searchQuery) . '%';
     switch ($searchType) {
         case 'codigobarras':
 
@@ -116,16 +117,16 @@ if (!empty($searchType) && !empty($searchQuery)) {
             $conditions[] = "p.codigobarras LIKE :query";
             break;
         case 'usuario_cadastro':
-            $conditions[] = "u_cadastro.usuario LIKE :query";
+            $conditions[] = "LOWER(u_cadastro.usuario) LIKE :query";
             break;
         case 'usuario_envio':
-            $conditions[] = "u_envio.usuario LIKE :query";
+            $conditions[] = "LOWER(u_envio.usuario) LIKE :query";
             break;
         case 'usuario_recebimento':
-            $conditions[] = "u_recebimento.usuario LIKE :query";
+            $conditions[] = "LOWER(u_recebimento.usuario) LIKE :query";
             break;
         case 'unidade_envio':
-            $conditions[] = "l_envio.nome LIKE :query";
+            $conditions[] = "LOWER(l_envio.nome) LIKE :query";
             break;
         case 'data_cadastro':
             $conditions[] = "TO_CHAR(p.data_cadastro, 'DD-MM-YYYY') LIKE :query";
@@ -137,13 +138,14 @@ if (!empty($searchType) && !empty($searchQuery)) {
             $conditions[] = "TO_CHAR(p.data_recebimento, 'DD-MM-YYYY') LIKE :query";
             break;
         case 'lab_nome':
-            $conditions[] = "l_lab.nome LIKE :query";
+            $conditions[] = "LOWER(l_lab.nome) LIKE :query";
             break;  
         default:
             break;
     }
     $params[':query'] = $queryParam;
 }
+
 
 if (!empty($data_inicio)) {
     $conditions[] = "p.data_cadastro >= :data_inicio";

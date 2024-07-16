@@ -50,11 +50,11 @@ $conditions = [];
 $params = [];
 
 if ($filter == 'enviados') {
-    $conditions[] = "p.data_envio IS NOT NULL";
+    $conditions[] = "p.status = 'enviado'";
 } elseif ($filter == 'recebidos') {
-    $conditions[] = "p.data_recebimento IS NOT NULL";
-}elseif ($filter == 'cadastrado') {
-    $conditions[] = "p.data_cadastro IS NOT NULL";
+    $conditions[] = "p.status = 'recebido'";
+} elseif ($filter == 'cadastrado') {
+    $conditions[] = "p.status = 'cadastrado'";
 }
 
 if (!empty($local_id)) {
@@ -63,7 +63,7 @@ if (!empty($local_id)) {
 }
 
 if (!empty($searchType) && !empty($searchQuery)) {
-    $queryParam = '%' . $searchQuery . '%';
+    $queryParam = '%' . strtolower($searchQuery) . '%';
     switch ($searchType) {
         case 'codigobarras':
 
@@ -93,16 +93,16 @@ if (!empty($searchType) && !empty($searchQuery)) {
             $conditions[] = "p.codigobarras LIKE :query";
             break;
         case 'usuario_cadastro':
-            $conditions[] = "u_cadastro.usuario LIKE :query";
+            $conditions[] = "LOWER(u_cadastro.usuario) LIKE :query";
             break;
         case 'usuario_envio':
-            $conditions[] = "u_envio.usuario LIKE :query";
+            $conditions[] = "LOWER(u_envio.usuario) LIKE :query";
             break;
         case 'usuario_recebimento':
-            $conditions[] = "u_recebimento.usuario LIKE :query";
+            $conditions[] = "LOWER(u_recebimento.usuario) LIKE :query";
             break;
         case 'unidade_envio':
-            $conditions[] = "l_envio.nome LIKE :query";
+            $conditions[] = "LOWER(l_envio.nome) LIKE :query";
             break;
         case 'data_cadastro':
             $conditions[] = "TO_CHAR(p.data_cadastro, 'DD-MM-YYYY') LIKE :query";
@@ -114,7 +114,7 @@ if (!empty($searchType) && !empty($searchQuery)) {
             $conditions[] = "TO_CHAR(p.data_recebimento, 'DD-MM-YYYY') LIKE :query";
             break;
         case 'lab_nome':
-            $conditions[] = "l_lab.nome LIKE :query";
+            $conditions[] = "LOWER(l_lab.nome) LIKE :query";
             break;  
         default:
             break;
@@ -148,7 +148,9 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <body>
     <div class="container container-custom2">
         <h1 class="text-center mb-4" style="color: #28a745;">Listar Pacotes</h1>
+        <?php if ($_SESSION['unidade_id'] != '1' || $_SESSION['user_type'] === 'admin'): ?>
         <a href="cadastro_pacote.php" class="btn btn-custom"><i class="fas fa-plus"></i> Cadastar Amostras</a>
+        <?php endif; ?>
         <form method="GET" action="" class="form-inline mb-4 justify-content-center">
             <div class="form-group mr-3">
                 <label for="filter" class="mr-2" style="color: #28a745;">Filtrar por:</label>
@@ -178,7 +180,6 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <option value="usuario_cadastro" <?php if ($searchType == 'usuario_cadastro') echo 'selected'; ?>>Usuário que Cadastrou</option>
                     <option value="usuario_envio" <?php if ($searchType == 'usuario_envio') echo 'selected'; ?>>Usuário que Enviou</option>
                     <option value="usuario_recebimento" <?php if ($searchType == 'usuario_recebimento') echo 'selected'; ?>>Usuário que Recebeu</option>
-
                     <option value="unidade_envio" <?php if ($searchType == 'unidade_envio') echo 'selected'; ?>>Unidade que Enviou</option>
                     <option value="data_cadastro" <?php if ($searchType == 'data_cadastro') echo 'selected'; ?>>Data de Cadastro</option>
                     <option value="data_envio" <?php if ($searchType == 'data_envio') echo 'selected'; ?>>Data de Envio</option>
@@ -189,9 +190,16 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <div class="form-group mr-3">
                 <label for="searchQuery" class="mr-2" style="color: #28a745;">Consulta:</label>
                 <input type="text" name="searchQuery" id="searchQuery" class="form-control" value="<?php echo htmlspecialchars($searchQuery); ?>">
-                
             </div>
             <button type="submit" class="btn btn-custom"><i class="fas fa-filter"></i> Filtrar</button>
+        </form>
+
+        <form method="GET" action="geretepdf2.php">
+            <input type="hidden" name="filter" value="<?php echo htmlspecialchars($filter); ?>">
+            <input type="hidden" name="local_id" value="<?php echo htmlspecialchars($local_id); ?>">
+            <input type="hidden" name="searchType" value="<?php echo htmlspecialchars($searchType); ?>">
+            <input type="hidden" name="searchQuery" value="<?php echo htmlspecialchars($searchQuery); ?>">
+            <button type="submit" class="btn btn-custom"><i class="fas fa-file-pdf"></i> Gerar PDF</button>
         </form>
         
         <div class="table-wrapper" style="position: relative;" id="managerTable">  
@@ -251,7 +259,13 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <?php endif; ?>
                 </tbody>
             </table>
+            
         </div>
+        <!-- Exibir o número de resultados -->
+        <div class="text-center mb-4">
+                <p><strong>Total de Amostras:</strong> <?php echo count($pacotes); ?></p>
+        </div>
+        
         <div class="text-center mt-3">
             <a href="index.php" class="btn btn-secondary">  <i class="fas fa-angle-left"></i> Voltar</a>
         </div>

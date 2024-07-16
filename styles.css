@@ -135,11 +135,13 @@ a{
 }
 
 .sidebar {
-    height: 100%;
+    height: 93%;
     width: 250px;
     position: fixed;
+    overflow-y: scroll;
     top: 0;
     left: 0;
+    
     background-color: #f8f9fa;
     padding-top: 20px;
 }

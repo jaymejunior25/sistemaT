@@ -72,11 +72,15 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <body>
     <div class="sidebar" style="background-color: #10473E;" >
         <h3 class="text-center" style="color: #fff;"><i class="fas fa-home"></i>Menu</h3>
+        <?php if ($_SESSION['unidade_id'] != '1' || $_SESSION['user_type'] === 'admin'): ?>
         <a style="color: #fff;" href="cadastro_pacote.php"><i class="fas fa-plus"></i> Cadastrar Amostras</a>
         <a style="color: #fff;"href="envio_pacote.php"><i class="fas fa-paper-plane"></i> Enviar Amostras</a>
-        <?php if ($_SESSION['user_type'] === 'admin' || $_SESSION['unidade_id'] === '1'): ?>
+        <?php endif; ?>
+        <?php if ($_SESSION['unidade_id'] == '1' || $_SESSION['user_type'] === 'admin'): ?>
             <a style="color: #fff;" href="recebimento.php"><i class="fas fa-inbox"></i> Receber Amostras</a>
             <a style="color: #fff;" href="recebimento_LABMASTER.php"><i class="fas fa-vials"></i> Receber Amostras LABMASTER</a>
+            <a style="color: #fff;" href="relatorio_pendencias.php"><i class="fas fa-file-invoice"></i> Relatorio de Pendencias</a>
+            <a style="color: #fff;" href="lista_pacotes.php"><i class="fas fa-vial"></i> Gerenciar Amostras</a>
         <?php endif; ?>
 
         <?php if ($_SESSION['user_type'] === 'admin'): ?>
@@ -94,10 +98,9 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </div>
     <div class="content">
         <div class="container container-custom"  style="background-color: rgb(38, 168, 147);">
-            <h1 class="text-center mb-4" style="color: #fff;">Bem-vindo ao Sistema de Gerenciamento de Envios e Recebimentos <?php echo ucfirst($user_name); ?></h1>
-            <h2 class="text-center mb-4" style="color: #fff;">Você está logado como um Usuário: <?php echo ucfirst($user_type); ?></h2>
+            <h1 class="text-center mb-4" style="color: #fff;">Bem-vindo ao Sistema de Gerenciamento de Envios e Recebimentos de Amostras: <?php echo ucfirst($user_name); ?></h1>
+            <h2 class="text-center mb-4" style="color: #fff;">Você está logado como um Usuário Classe: <?php echo ucfirst($user_type); ?></h2>
         </div>
-
         <h2 class="text-center mb-4"style="color: rgb(38, 168, 147);"><i class="fas fa-vial"></i> Amostras no Local</h2>
         <div class="table-wrapper" style="position: relative;" id="managerTable">
             <table class="table table-bordered table-hover table-striped">
@@ -110,7 +113,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <th>Data de Cadastro</th>
                         <th>Data de Envio</th>
                         <!--<th>Data de Recebimento</th> -->
-                        <th>Local de Cadastro</th>
+                        <!--<th>Local de Cadastro</th>-->
                         <th>Local de Envio</th>
                         
                         <th>Cadastrado por</th>
@@ -138,7 +141,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <td><?php if($pacote['data_envio']) {echo htmlspecialchars(date("d-m-Y", strtotime($pacote['data_envio'])));}; ?></td>
                                 <!-- <td><?php echo htmlspecialchars($pacote['data_envio']); ?></td> -->
                                 <!--  <td><?php echo htmlspecialchars($pacote['data_recebimento']); ?></td> -->
-                                <td><?php echo htmlspecialchars($pacote['cadastro_nome']); ?></td>
+                               <!-- <td><?php echo htmlspecialchars($pacote['cadastro_nome']); ?></td>-->
                                 <td><?php echo htmlspecialchars($pacote['envio_nome']); ?></td>
                                 
                                 <td><?php echo htmlspecialchars($pacote['cadastrado_por']); ?></td>

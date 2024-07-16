@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,6 +13,19 @@
     <div class="container container-customlistas">
         <h1 class="text-center mb-4" style="color: #28a745;">Receber Pacote</h1>
         <form id="pacoteForm">
+            <div class="form-group">
+                <label for="laboratorio" style="color: #28a745;">Selecione o Laboratório:</label>
+                <select id="laboratorio" class="form-control" required>
+                    <option value="">Selecione</option>
+                    <option value="GECOQ">GECOQ</option>
+                    <option value="GEMER">GEMER</option>
+                    <option value="GETDT">GETDT</option>
+                    <option value="REDOME">REDOME</option>
+                    <option value="NAT">NAT</option>
+                    <option value="GEHEM">GEHEM</option>
+                    <!-- Adicione os demais laboratórios aqui -->
+                </select>
+            </div>
             <div class="form-group">
                 <label for="codigobarras" style="color: #28a745;">Código de Barras:</label>
                 <input type="text" name="codigobarras" id="codigobarras" class="form-control" required>
@@ -50,17 +62,35 @@
                 return codigoBarras.slice(1);
             } else if ((digitoverificarp === 'B' || digitoverificarp === 'b') && !isNaN(digitoverificaru)) {
                 return codigoBarras.slice(0, -2) + '0' + codigoBarras.slice(-1);
-            } else {
+            } else if ((digitoverificarp === 'A' || digitoverificarp === 'A') && (digitoverificaru === 'A' || digitoverificaru === 'a')){
                 return codigoBarras.slice(1, -1);
             }
+            else{
+                return codigoBarras;
+            }
+        }
+        function codigoBarrasDuplicado(codigobarrasFiltrado) {
+            return pacotes.some(pacote => pacote.codigobarrasFiltrado === codigobarrasFiltrado);
         }
 
         document.getElementById('codigobarras').addEventListener('focusout', function() {
             const codigobarras = document.getElementById('codigobarras').value;
+            const laboratorio = document.getElementById('laboratorio').value;
 
-            if (codigobarras) {
+            if (codigobarras && laboratorio) {
                 const codigobarrasFiltrado = filtrarCodigoBarras(codigobarras);
-                pacotes.unshift({ codigobarras,codigobarrasFiltrado });
+                if (codigoBarrasDuplicado(codigobarrasFiltrado)) {
+                    alert('Código de barras duplicado.');
+                    document.getElementById('codigobarras').value = '';
+                    document.getElementById('codigobarras').focus();
+                    return;
+                }
+                const pacote = {
+                    codigobarras: codigobarras,
+                    laboratorio: laboratorio,
+                    codigobarrasFiltrado: codigobarrasFiltrado
+                };
+                pacotes.unshift(pacote);
                 atualizarListaPacotes();
                 document.getElementById('codigobarras').value = '';
                 document.getElementById('codigobarras').focus();
@@ -100,7 +130,7 @@
                 const item = document.createElement('div');
                 item.className = 'alert alert-secondary d-flex justify-content-between align-items-center';
                 item.innerHTML = `
-                    <span>Código de Barras: ${pacote.codigobarrasFiltrado}</span>
+                    <span>Laboratório: ${pacote.laboratorio}, Código de Barras: ${pacote.codigobarrasFiltrado}</span>
                     <button class="btn btn-danger btn-sm" onclick="removerPacote(${index})">Excluir</button>
                 `;
                 lista.appendChild(item);

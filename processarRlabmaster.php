@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         if (($digitoverificarp == 'A' || $digitoverificarp == 'a') && ($digitoverificaru == 'B' || $digitoverificaru == 'b')) {
             $codigobarras = substr($codigobarras, 1, -1); // Remove o primeiro e o último dígito
-        } else {
+        } elseif(strlen($codigobarras) != 9) {
             echo json_encode(['status' => 'error', 'message' => 'Pacote com código de barras ' . $codigobarras . ' não pertence ao LABMASTER".']);
             exit();
         }

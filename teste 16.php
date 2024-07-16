@@ -38,6 +38,8 @@ $tipos_amostras = json_decode($remessa['tipos_amostras']);
                 <p class="card-text">Tipos de Amostras: <span id="infoTiposAmostras"><?php echo implode(', ', $tipos_amostras); ?></span></p>
                 <p class="card-text">Número de Tubos: <span id="infoNumeroTubos"><?php echo $remessa['numero_tubos']; ?></<span id="infoNumeroTubos"><?php echo $remessa['numero_tubos']; ?></span></p>
                 <p class="card-text">Observação: <span id="infoObservacao"><?php echo $remessa['observacao']; ?></span></p>
+                <p class="card-text">Observação: <span id="datacadastro"><?php echo $remessa['data_cadastro']; ?></span></p>
+
             </div>
         </div>
         <div class="text-center mt-4">

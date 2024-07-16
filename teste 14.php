@@ -13,10 +13,10 @@
     <div class="container container-customlistas">
         <h1 class="text-center mb-4" style="color: #28a745;">Cadastro de Tubos</h1>
         <form id="tubosForm">
-            <div class="form-group">
+            <!--<div class="form-group">
                 <label for="local" style="color: #28a745;">Local:</label>
                 <input type="text" name="local" id="local" class="form-control" required>
-            </div>
+            </div>-->
             <div class="form-group">
                 <label for="tipos_amostras" style="color: #28a745;">Tipos de Amostras:</label>
                 <select multiple name="tipos_amostras" id="tipos_amostras" class="form-control" required>

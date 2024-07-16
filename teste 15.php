@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $unidade_id = $_SESSION['unidade_id'];  
 
     $codigo = generateRemessaCode($dbconn);
-    $local = $data['local'];
+
     $tipos_amostras = $data['tipos_amostras'];
     $numero_tubos = $data['numero_tubos'];
     $observacao = $data['observacao'];

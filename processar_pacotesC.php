@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $penultimo_digito = substr($codigobarras, -2, 1);
             }
             else {
-                if(strlen($codigobarras) == 9){
+                if(strlen($codigobarras) === 9){
                     $doisultimos_digitos = 20; // ID do laboratório LABMASTER
                 }else{
                     $penultimo_digito = substr($codigobarras, -2, 1);
@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
         }
             // Verificar qual dígito usar: os dois últimos ou o penúltimo
-            $digito_a_utilizar = ($digitoverificarp == '=' && ctype_digit($digitoverificaru)) || (($digitoverificarp == 'A' || $digitoverificarp == 'a') && ($digitoverificaru == 'B' || $digitoverificaru == 'b')) ? $doisultimos_digitos : $penultimo_digito;
+            $digito_a_utilizar = ($digitoverificarp == '=' && ctype_digit($digitoverificaru)) || (strlen($codigobarras) === 9) || (($digitoverificarp == 'A' || $digitoverificarp == 'a') && ($digitoverificaru == 'B' || $digitoverificaru == 'b')) ? $doisultimos_digitos : $penultimo_digito;
             
             // Consultar o ID do laboratório correspondente ao dígito
             $stmt = $dbconn->prepare("SELECT * FROM laboratorio WHERE digito = :digito");

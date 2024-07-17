@@ -22,6 +22,8 @@ $local_id = '';
 $searchType = '';
 $searchQuery = '';
 $data_inicio = '';
+$dateType = '';
+$dateValue = '';
 $colunas_selecionadas = [];
 
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
@@ -34,6 +36,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
     if (isset($_GET['searchType']) && isset($_GET['searchQuery'])) {
         $searchType = $_GET['searchType'];
         $searchQuery = $_GET['searchQuery'];
+    }
+    if (isset($_GET['dateType'])) {
+        $dateType = $_GET['dateType'];
+    }
+    if (isset($_GET['dateValue'])) {
+        $dateValue = $_GET['dateValue'];
     }
     if (isset($_GET['data_inicio'])) {
         $data_inicio = $_GET['data_inicio'];
@@ -128,15 +136,6 @@ if (!empty($searchType) && !empty($searchQuery)) {
         case 'unidade_envio':
             $conditions[] = "LOWER(l_envio.nome) LIKE :query";
             break;
-        case 'data_cadastro':
-            $conditions[] = "TO_CHAR(p.data_cadastro, 'DD-MM-YYYY') LIKE :query";
-            break;
-        case 'data_envio':
-            $conditions[] = "TO_CHAR(p.data_envio, 'DD-MM-YYYY') LIKE :query";
-            break;
-        case 'data_recebimento':
-            $conditions[] = "TO_CHAR(p.data_recebimento, 'DD-MM-YYYY') LIKE :query";
-            break;
         case 'lab_nome':
             $conditions[] = "LOWER(l_lab.nome) LIKE :query";
             break;  
@@ -145,7 +144,22 @@ if (!empty($searchType) && !empty($searchQuery)) {
     }
     $params[':query'] = $queryParam;
 }
-
+if (!empty($dateType) && !empty($dateValue)) {
+    switch ($dateType) {
+        case 'dataCadastro':
+            $conditions[] = "DATE(p.data_cadastro) = :dateValue";
+            break;
+        case 'dataEnvio':
+            $conditions[] = "DATE(p.data_envio) = :dateValue";
+            break;
+        case 'dataRecebimento':
+            $conditions[] = "DATE(p.data_recebimento) = :dateValue";
+            break;
+        default:
+            break;
+    }
+    $params[':dateValue'] = $dateValue;
+}
 
 if (!empty($data_inicio)) {
     $conditions[] = "p.data_cadastro >= :data_inicio";
@@ -226,20 +240,31 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <div class="form-group mb-2 ml-2">
                     <label for="searchType" class="mr-2">Buscar por:</label>
                     <select name="searchType" id="searchType" class="form-control">
+                        <option value="">Selecionar</optio>
                         <option value="codigobarras" <?php if ($searchType == 'codigobarras') echo 'selected'; ?>>Codigo de Barras</option>
                         <option value="usuario_cadastro" <?php if ($searchType == 'usuario_cadastro') echo 'selected'; ?>>Usuario de Cadastro</option>
                         <option value="usuario_envio" <?php if ($searchType == 'usuario_envio') echo 'selected'; ?>>Usuario de Envio</option>
                         <option value="usuario_recebimento" <?php if ($searchType == 'usuario_recebimento') echo 'selected'; ?>>Usuario de Recebimento</option>
                         <option value="unidade_envio" <?php if ($searchType == 'unidade_envio') echo 'selected'; ?>>Unidade de Envio</option>
-                        <option value="data_cadastro" <?php if ($searchType == 'data_cadastro') echo 'selected'; ?>>Data de Cadastro</option>
-                        <option value="data_envio" <?php if ($searchType == 'data_envio') echo 'selected'; ?>>Data de Envio</option>
-                        <option value="data_recebimento" <?php if ($searchType == 'data_recebimento') echo 'selected'; ?>>Data de Recebimento</option>
                         <option value="lab_nome" <?php if ($searchType == 'lab_nome') echo 'selected'; ?>>Laboratorio</option>
                     </select>
                 </div>
                 <div class="form-group mb-2 ml-2">
-                    <label for="searchQuery" class="mr-2">Buscar:</label>
-                    <input type="text" name="searchQuery" id="searchQuery" class="form-control" value="<?php echo htmlspecialchars($searchQuery); ?>">
+                        <label for="searchQuery" class="mr-2">Buscar:</label>
+                        <input type="text" name="searchQuery" id="searchQuery" class="form-control" value="<?php echo htmlspecialchars($searchQuery); ?>">
+                    </div>
+                    <div class="form-group mr-3">
+                    <label for="dateType" class="mr-2" style="color: #28a745;">Tipo de Data:</label>
+                    <select name="dateType" id="dateType" class="form-control">
+                        <option value="">Selecionar</option>
+                        <option value="dataCadastro" <?php if ($dateType == 'dataCadastro') echo 'selected'; ?>>Data de Cadastro</option>
+                        <option value="dataEnvio" <?php if ($dateType == 'dataEnvio') echo 'selected'; ?>>Data de Envio</option>
+                        <option value="dataRecebimento" <?php if ($dateType == 'dataRecebimento') echo 'selected'; ?>>Data de Recebimento</option>
+                    </select>
+                </div>
+                <div class="form-group mr-3">
+                    <label for="dateValue" class="mr-2" style="color: #28a745;">Data:</label>
+                    <input type="date" name="dateValue" id="dateValue" class="form-control" value="<?php echo htmlspecialchars($dateValue); ?>">
                 </div>
                 <input type="hidden" name="data_inicio" value="<?php echo htmlspecialchars($data_inicio); ?>">
                 <?php foreach ($colunas_selecionadas as $column): ?>

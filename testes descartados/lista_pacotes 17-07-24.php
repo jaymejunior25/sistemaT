@@ -21,8 +21,6 @@ $filter = '';
 $local_id = '';
 $searchType = '';
 $searchQuery = '';
-$dateType = '';
-$dateValue = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
     if (isset($_GET['filter'])) {
@@ -34,12 +32,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
     if (isset($_GET['searchType']) && isset($_GET['searchQuery'])) {
         $searchType = $_GET['searchType'];
         $searchQuery = $_GET['searchQuery'];
-    }
-    if (isset($_GET['dateType'])) {
-        $dateType = $_GET['dateType'];
-    }
-    if (isset($_GET['dateValue'])) {
-        $dateValue = $_GET['dateValue'];
     }
 }
 
@@ -112,6 +104,15 @@ if (!empty($searchType) && !empty($searchQuery)) {
         case 'unidade_envio':
             $conditions[] = "LOWER(l_envio.nome) LIKE :query";
             break;
+        case 'data_cadastro':
+            $conditions[] = "TO_CHAR(p.data_cadastro, 'DD-MM-YYYY') LIKE :query";
+            break;
+        case 'data_envio':
+            $conditions[] = "TO_CHAR(p.data_envio, 'DD-MM-YYYY') LIKE :query";
+            break;
+        case 'data_recebimento':
+            $conditions[] = "TO_CHAR(p.data_recebimento, 'DD-MM-YYYY') LIKE :query";
+            break;
         case 'lab_nome':
             $conditions[] = "LOWER(l_lab.nome) LIKE :query";
             break;  
@@ -120,22 +121,7 @@ if (!empty($searchType) && !empty($searchQuery)) {
     }
     $params[':query'] = $queryParam;
 }
-if (!empty($dateType) && !empty($dateValue)) {
-    switch ($dateType) {
-        case 'dataCadastro':
-            $conditions[] = "DATE(p.data_cadastro) = :dateValue";
-            break;
-        case 'dataEnvio':
-            $conditions[] = "DATE(p.data_envio) = :dateValue";
-            break;
-        case 'dataRecebimento':
-            $conditions[] = "DATE(p.data_recebimento) = :dateValue";
-            break;
-        default:
-            break;
-    }
-    $params[':dateValue'] = $dateValue;
-}
+
 
 if (count($conditions) > 0) {
     $sql .= " WHERE " . implode(" AND ", $conditions);
@@ -167,7 +153,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <?php endif; ?>
         <form method="GET" action="" class="form-inline mb-4 justify-content-center">
             <div class="form-group mr-3">
-                <label for="filter" class="mr-2" style="color: #28a745;">Status:</label>
+                <label for="filter" class="mr-2" style="color: #28a745;">Filtrar por:</label>
                 <select name="filter" id="filter" class="form-control">
                     <option value="">Todos</option>
                     <option value="cadastrado" <?php if ($filter == 'cadastrado') echo 'selected'; ?>>Cadastrado</option>
@@ -176,7 +162,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </select>
             </div>
             <div class="form-group mr-3">
-                <label for="local_id" class="mr-2" style="color: #28a745;">Local:</label>
+                <label for="local_id" class="mr-2" style="color: #28a745;">Local de Cadastro:</label>
                 <select name="local_id" id="local_id" class="form-control">
                     <option value="">Todos</option>
                     <?php foreach ($locais as $local): ?>
@@ -195,25 +181,15 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <option value="usuario_envio" <?php if ($searchType == 'usuario_envio') echo 'selected'; ?>>Usuário que Enviou</option>
                     <option value="usuario_recebimento" <?php if ($searchType == 'usuario_recebimento') echo 'selected'; ?>>Usuário que Recebeu</option>
                     <option value="unidade_envio" <?php if ($searchType == 'unidade_envio') echo 'selected'; ?>>Unidade que Enviou</option>
+                    <option value="data_cadastro" <?php if ($searchType == 'data_cadastro') echo 'selected'; ?>>Data de Cadastro</option>
+                    <option value="data_envio" <?php if ($searchType == 'data_envio') echo 'selected'; ?>>Data de Envio</option>
+                    <option value="data_recebimento" <?php if ($searchType == 'data_recebimento') echo 'selected'; ?>>Data de Recebimento</option>
                     <option value="lab_nome" <?php if ($searchType == 'lab_nome') echo 'selected'; ?>>Nome do Laboratorio</option>
                 </select>
             </div>
             <div class="form-group mr-3">
                 <label for="searchQuery" class="mr-2" style="color: #28a745;">Consulta:</label>
                 <input type="text" name="searchQuery" id="searchQuery" class="form-control" value="<?php echo htmlspecialchars($searchQuery); ?>">
-            </div>
-            <div class="form-group mr-3">
-                <label for="dateType" class="mr-2" style="color: #28a745;">Tipo de Data:</label>
-                <select name="dateType" id="dateType" class="form-control">
-                    <option value="">Selecionar</option>
-                    <option value="dataCadastro" <?php if ($dateType == 'dataCadastro') echo 'selected'; ?>>Data de Cadastro</option>
-                    <option value="dataEnvio" <?php if ($dateType == 'dataEnvio') echo 'selected'; ?>>Data de Envio</option>
-                    <option value="dataRecebimento" <?php if ($dateType == 'dataRecebimento') echo 'selected'; ?>>Data de Recebimento</option>
-                </select>
-            </div>
-            <div class="form-group mr-3">
-                <label for="dateValue" class="mr-2" style="color: #28a745;">Data:</label>
-                <input type="date" name="dateValue" id="dateValue" class="form-control" value="<?php echo htmlspecialchars($dateValue); ?>">
             </div>
             <button type="submit" class="btn btn-custom"><i class="fas fa-filter"></i> Filtrar</button>
         </form>
@@ -223,8 +199,6 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <input type="hidden" name="local_id" value="<?php echo htmlspecialchars($local_id); ?>">
             <input type="hidden" name="searchType" value="<?php echo htmlspecialchars($searchType); ?>">
             <input type="hidden" name="searchQuery" value="<?php echo htmlspecialchars($searchQuery); ?>">
-            <input type="hidden" name="dateType" value="<?php echo htmlspecialchars($dateType); ?>">
-            <input type="hidden" name="dateValue" value="<?php echo htmlspecialchars($dateValue); ?>">
             <button type="submit" class="btn btn-custom"><i class="fas fa-file-pdf"></i> Gerar PDF</button>
         </form>
         
@@ -235,15 +209,15 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <th>Codigo de<br> Barras</th>
                         <th>Status</th>
                         <th>Descrição</th>
-                        <th>Cadastrado por</th>
-                        <th>Data de<br> Cadastro</th>
-                        <th>Local de<br> Envio</th>
-                        <th>Enviado por</th>
+                        <th>laboratorio</th>
+                        <th>Data d<br>e Cadastro</th>
                         <th>Data de <br>Envio</th>
-                        <th>Recebido por</th>
                         <th>Data de <br> Recebimento</th>
                        <!-- <th>Local de <br>Cadastro</th> -->
-                        <th>laboratorio</th>
+                        <th>Local de<br> Envio</th>
+                        <th>Cadastrado por</th>
+                        <th>Enviado por</th>
+                        <th>Recebido por</th>
                         <?php if ($_SESSION['user_type'] === 'admin'): ?><th>Ações</th><?php endif; ?>
                     </tr>
                 </thead>
@@ -262,18 +236,15 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <?php endif; ?>
                                 </td>
                                 <td><?php echo htmlspecialchars($pacote['descricao']); ?></td>
-                                <td><?php echo htmlspecialchars($pacote['cadastrado_por']); ?></td>
+                                <td><?php echo htmlspecialchars($pacote['lab_nome']); ?></td>
                                 <td><?php echo htmlspecialchars(date("d-m-Y", strtotime($pacote['data_cadastro']))); ?></td> 
-                                <td><?php echo htmlspecialchars($pacote['envio_nome']); ?></td>
-                                <td><?php echo htmlspecialchars($pacote['enviado_por']); ?></td>
                                 <td><?php if($pacote['data_envio']) {echo htmlspecialchars(date("d-m-Y", strtotime($pacote['data_envio'])));}; ?></td>
-                                
-                                <td><?php echo htmlspecialchars($pacote['recebido_por']); ?></td>
                                 <td><?php if($pacote['data_recebimento']) {echo htmlspecialchars(date("d-m-Y", strtotime($pacote['data_recebimento'])));}; ?></td>
                                 <!-- <td><?php echo htmlspecialchars($pacote['cadastro_nome']); ?></td> -->
-
-                                
-                                <td><?php echo htmlspecialchars($pacote['lab_nome']); ?></td>
+                                <td><?php echo htmlspecialchars($pacote['envio_nome']); ?></td>
+                                <td><?php echo htmlspecialchars($pacote['cadastrado_por']); ?></td>
+                                <td><?php echo htmlspecialchars($pacote['enviado_por']); ?></td>
+                                <td><?php echo htmlspecialchars($pacote['recebido_por']); ?></td>
                                  <?php if ($_SESSION['user_type'] === 'admin'): ?><td>
                                     <a href="editar_pacote.php?id=<?php echo $pacote['id']; ?>" class="btn btn-primary btn-sm">Editar</a>
                                     <button type="button"  class="btn btn-danger btn-sm" onclick="openDeleteModal(<?php echo $pacote['id']; ?>)">Excluir</button>

@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
         }
             // Verificar qual dígito usar: os dois últimos ou o penúltimo
-            $digito_a_utilizar = ($digitoverificarp == '=' && ctype_digit($digitoverificaru)) || (($digitoverificarp == 'A' || $digitoverificarp == 'a') && ($digitoverificaru == 'B' || $digitoverificaru == 'b')) ? $doisultimos_digitos : $penultimo_digito;
+            $digito_a_utilizar = ($digitoverificarp == '=' && ctype_digit($digitoverificaru)) || (strlen($codigobarras) === 9) || (($digitoverificarp == 'A' || $digitoverificarp == 'a') && ($digitoverificaru == 'B' || $digitoverificaru == 'b')) ? $doisultimos_digitos : $penultimo_digito;
             
         // Verificar se o nome do laboratório do código de barras corresponde ao laboratório selecionado
         $stmtLab = $dbconn->prepare("SELECT * FROM laboratorio WHERE digito = :digito");

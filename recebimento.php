@@ -103,7 +103,7 @@
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded'
                     },
-                    body: 'codigobarras=' + encodeURIComponent(codigobarras)+'&laboratorio=' + encodeURIComponent(laboratorio)
+                    body: 'codigobarras=' + encodeURIComponent(codigobarrasFiltrado)+'&laboratorio=' + encodeURIComponent(laboratorio)
                 })
                 .then(response => response.json())
                 .then(data => {
@@ -158,15 +158,18 @@
             const lista = document.getElementById('pacotesList');
             lista.innerHTML = '';
 
-            pacotes.forEach((pacote, index) => {
+            // Percorre a lista de pacotes de forma invertida para adicionar no topo
+            for (let i = pacotes.length - 1; i >= 0; i--) {
+                const pacote = pacotes[i];
+
                 const item = document.createElement('div');
                 item.className = 'alert alert-secondary d-flex justify-content-between align-items-center';
                 item.innerHTML = `
                     <span>Laboratório: ${pacote.laboratorio}, Código de Barras: ${pacote.codigobarras}</span>
-                    <button class="btn btn-danger btn-sm" onclick="removerPacote(${index})">Excluir</button>
+                    <button class="btn btn-danger btn-sm" onclick="removerPacote(${i})">Excluir</button>
                 `;
                 lista.appendChild(item);
-            });
+            }
         }
 
         function removerPacote(index) {

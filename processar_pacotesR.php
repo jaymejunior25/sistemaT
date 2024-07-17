@@ -32,10 +32,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmtLab->execute([':digito' => substr($codigobarras, -2)]);
         $lab = $stmtLab->fetch(PDO::FETCH_ASSOC);
 
-        if ($lab && $lab['nome'] != $laboratorio) {
-            echo json_encode(['status' => 'error', 'message' => 'O nome do laboratório do código de barras não corresponde ao laboratório selecionado.']);
-            exit();
-        }
+        //if ($lab && $lab['nome'] != $laboratorio) {
+          //  echo json_encode(['status' => 'error', 'message' => 'O nome do laboratório do código de barras não corresponde ao laboratório selecionado.']);
+            //exit();
+        //}
 
         // Verificar se o pacote está com status "enviado"
         $stmt = $dbconn->prepare("SELECT * FROM pacotes WHERE codigobarras = :codigobarras AND status = 'enviado'");

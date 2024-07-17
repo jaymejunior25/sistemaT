@@ -108,7 +108,7 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'enviado') {
-                        pacotes.push({ laboratorio, codigobarras: codigobarrasFiltrado });
+                        pacotes.push({ laboratorio, codigobarras, codigobarrasFiltrado });
                         atualizarListaPacotes();
                         document.getElementById('codigobarras').value = '';
                         document.getElementById('codigobarras').focus();

@@ -94,7 +94,7 @@
                     if (data.status === 'exists') {
                         alert('Pacote com código de barras ' + codigobarrasFiltrado + ' já existe no banco de dados.');
                     } else {
-                        pacotes.push({ descricao, codigobarras: codigobarrasFiltrado });
+                        pacotes.push({ descricao, codigobarras, codigobarrasFiltrado });
                         atualizarListaPacotes();
                         document.getElementById('codigobarras').value = '';
                         document.getElementById('codigobarras').focus();
@@ -148,7 +148,7 @@
                 const item = document.createElement('div');
                 item.className = 'alert alert-secondary d-flex justify-content-between align-items-center';
                 item.innerHTML = `
-                    <span>Descrição: ${pacote.descricao}, Código de Barras: ${pacote.codigobarras}</span>
+                    <span>Descrição: ${pacote.descricao}, Código de Barras: ${pacote.codigobarrasFiltrado}</span>
                     <button class="btn btn-danger btn-sm" onclick="removerPacote(${i})">Excluir</button>
                 `;
                 lista.appendChild(item);

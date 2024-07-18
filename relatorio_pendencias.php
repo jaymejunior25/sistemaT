@@ -358,7 +358,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <div class="text-center mb-4">
                 <p><strong>Total de Amostras:</strong> <?php echo count($pacotes); ?></p>
             </div>
-            <form method="post" action="generate_pdf.php" target="_blank">
+            <form method="post" action="Relatorio de pendencias pdf.php" target="_blank">
                 <input type="hidden" name="data_inicio" value="<?php echo htmlspecialchars($data_inicio); ?>">
                 <?php foreach ($colunas_selecionadas as $coluna): ?>
                     <input type="hidden" name="colunas[]" value="<?php echo htmlspecialchars($coluna); ?>">

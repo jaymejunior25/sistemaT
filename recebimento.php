@@ -30,9 +30,10 @@
                 <label for="codigobarras" style="color: #28a745;">Código de Barras:</label>
                 <input type="text" name="codigobarras" id="codigobarras" class="form-control" required>
             </div>
+            <button type="button" id="adicionarPacote" class="btn btn-primary btn-block mt-3"><i class="fas fa-plus"></i> Adicionar Pacote</button>
         </form>
         <div id="pacotesList" class="mt-3"></div>
-        <button type="button" id="receberTodos" class="btn btn-success btn-block mt-3"><i class="fas fa-check"></i>Receber Todos</button>
+        <button type="button" id="receberTodos" class="btn btn-success btn-block mt-3"><i class="fas fa-check"></i> Receber Todos</button>
         <div class="text-center mt-3">
             <a href="index.php" class="btn btn-secondary"><i class="fas fa-angle-left"></i> Voltar</a>
         </div>
@@ -48,7 +49,7 @@
             </div>
         </div>
     </div>
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.6.0/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
@@ -62,38 +63,65 @@
                 return codigoBarras.slice(1);
             } else if ((digitoverificarp === 'B' || digitoverificarp === 'b') && !isNaN(digitoverificaru)) {
                 return codigoBarras.slice(0, -2) + '0' + codigoBarras.slice(-1);
-            } else if ((digitoverificarp === 'A' || digitoverificarp === 'A') && (digitoverificaru === 'A' || digitoverificaru === 'a')){
+            } else if ((digitoverificarp === 'A' || digitoverificarp === 'a') && (digitoverificaru === 'B' || digitoverificaru === 'b')) {
                 return codigoBarras.slice(1, -1);
-            }
-            else{
+            } else if ((digitoverificarp === 'A' || digitoverificarp === 'a') && (digitoverificaru === 'A' || digitoverificaru === 'a')){
+                return codigoBarras.slice(1, -1);
+            } else {
                 return codigoBarras;
             }
         }
+
         function codigoBarrasDuplicado(codigobarrasFiltrado) {
             return pacotes.some(pacote => pacote.codigobarrasFiltrado === codigobarrasFiltrado);
         }
 
-        document.getElementById('codigobarras').addEventListener('focusout', function() {
+        document.getElementById('adicionarPacote').addEventListener('click', function() {
             const codigobarras = document.getElementById('codigobarras').value;
             const laboratorio = document.getElementById('laboratorio').value;
 
             if (codigobarras && laboratorio) {
+                // Verificação de duplicidade na lista dinâmica
                 const codigobarrasFiltrado = filtrarCodigoBarras(codigobarras);
+                let duplicado = pacotes.some(pacote => pacote.codigobarras === codigobarrasFiltrado);
+
+                if (duplicado) {
+                    alert('Pacote com código de barras ' + codigobarrasFiltrado + ' já existe na lista.');
+                    return;
+                }
+                // Verificar duplicidade de código de barras
                 if (codigoBarrasDuplicado(codigobarrasFiltrado)) {
                     alert('Código de barras duplicado.');
                     document.getElementById('codigobarras').value = '';
                     document.getElementById('codigobarras').focus();
                     return;
                 }
-                const pacote = {
-                    codigobarras: codigobarras,
-                    laboratorio: laboratorio,
-                    codigobarrasFiltrado: codigobarrasFiltrado
-                };
-                pacotes.unshift(pacote);
-                atualizarListaPacotes();
-                document.getElementById('codigobarras').value = '';
-                document.getElementById('codigobarras').focus();
+                
+                // Verificar status "enviado"
+                fetch('verificar_status.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: 'codigobarras=' + encodeURIComponent(codigobarrasFiltrado)+'&laboratorio=' + encodeURIComponent(laboratorio)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'enviado') {
+                        pacotes.push({ laboratorio, codigobarras, codigobarrasFiltrado });
+                        atualizarListaPacotes();
+                        document.getElementById('codigobarras').value = '';
+                        document.getElementById('codigobarras').focus();
+                    } else {
+                        alert('A amostra referente ao código de barras ' + codigobarrasFiltrado + ' não está com status "enviado" ou o Laboratorio selecionado não é compativel com o do Codigo de Barras.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    alert('Erro ao verificar status.');
+                });
+            } else {
+                alert('Por favor, preencha todos os campos.');
             }
         });
 
@@ -119,6 +147,10 @@
                 } else {
                     alert(data.message);
                 }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro ao processar a solicitação.');
             });
         });
 
@@ -126,15 +158,18 @@
             const lista = document.getElementById('pacotesList');
             lista.innerHTML = '';
 
-            pacotes.forEach((pacote, index) => {
+            // Percorre a lista de pacotes de forma invertida para adicionar no topo
+            for (let i = pacotes.length - 1; i >= 0; i--) {
+                const pacote = pacotes[i];
+
                 const item = document.createElement('div');
                 item.className = 'alert alert-secondary d-flex justify-content-between align-items-center';
                 item.innerHTML = `
-                    <span>Laboratório: ${pacote.laboratorio}, Código de Barras: ${pacote.codigobarrasFiltrado}</span>
-                    <button class="btn btn-danger btn-sm" onclick="removerPacote(${index})">Excluir</button>
+                    <span>Laboratório: ${pacote.laboratorio}, Código de Barras: ${pacote.codigobarras}</span>
+                    <button class="btn btn-danger btn-sm" onclick="removerPacote(${i})">Excluir</button>
                 `;
                 lista.appendChild(item);
-            });
+            }
         }
 
         function removerPacote(index) {

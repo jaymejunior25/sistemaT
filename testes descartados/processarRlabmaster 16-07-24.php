@@ -10,7 +10,6 @@ if (!isset($_SESSION['user_id'])) {
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $pacotes = json_decode($_POST['pacotes'], true);
     $usuario_recebimento_id = $_SESSION['user_id'];
-    $response = [];
 
     foreach ($pacotes as $pacote) {
         $codigobarras = $pacote['codigobarras'];
@@ -20,11 +19,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $digitoverificarp = substr($codigobarras, 0, 1);
         $digitoverificaru = substr($codigobarras, -1);
 
+
+
         if (($digitoverificarp == 'A' || $digitoverificarp == 'a') && ($digitoverificaru == 'B' || $digitoverificaru == 'b')) {
             $codigobarras = substr($codigobarras, 1, -1); // Remove o primeiro e o último dígito
-        } elseif (strlen($codigobarras) != 9) {
-            $response[] = ['status' => 'error', 'message' => 'Pacote com código de barras ' . $codigobarras . ' não pertence ao LABMASTER."'];
-            continue;
+        } elseif(strlen($codigobarras) != 9) {
+            echo json_encode(['status' => 'error', 'message' => 'Pacote com código de barras ' . $codigobarras . ' não pertence ao LABMASTER".']);
+            exit();
         }
 
         // Verificar se o pacote está com status "enviado"
@@ -32,13 +33,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt->execute([':codigobarras' => $codigobarras]);
         $pacote_enviado = $stmt->fetch(PDO::FETCH_ASSOC);
 
+
+
         if ($pacote_enviado) {
+
             // Consultar o ID do laboratório correspondente ao dígito
             $stmt = $dbconn->prepare("SELECT id FROM laboratorio WHERE digito = :digito");
             $stmt->execute([':digito' => $laboratorio]);
             $lab = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($lab) {
+
                 $laboratorio_id = $lab['id'];
 
                 // Atualizar o status do pacote para "recebido" e alterar o laboratório
@@ -53,15 +58,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     ':codigobarras' => $codigobarras
                 ]);
 
-                $response[] = ['status' => 'success', 'message' => 'Pacote com código de barras ' . $codigobarras . ' recebido com sucesso.'];
+
             } else {
-                $response[] = ['status' => 'error', 'message' => 'Laboratório com dígito ' . $laboratorio . ' não encontrado.'];
+                echo json_encode(['status' => 'error', 'message' => 'Laboratório com dígito ' . $laboratorio . ' não encontrado.']);
+                exit();
             }
         } else {
-            $response[] = ['status' => 'error', 'message' => 'Pacote com código de barras ' . $codigobarras . ' não está com status "enviado".'];
+            echo json_encode(['status' => 'error', 'message' => 'Pacote com código de barras ' . $codigobarras . ' não está com status "enviado".']);
+            exit();
         }
     }
 
-    echo json_encode($response);
+    echo json_encode(['status' => 'success', 'message' => 'Pacotes recebidos com sucesso!']);
 }
 ?>

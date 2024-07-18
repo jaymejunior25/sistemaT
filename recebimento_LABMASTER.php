@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Receber Pacote</title>
+    <title>Receber Pacote Labmaster</title>
     <link rel="icon" type="image/png" href="icon2.png" sizes="32x32" />
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="styles.css" rel="stylesheet">
@@ -12,7 +11,7 @@
 </head>
 <body>
     <div class="container container-customlistas">
-        <h1 class="text-center mb-4" style="color: #28a745;">Receber Pacote</h1>
+        <h1 class="text-center mb-4" style="color: #28a745;">Receber Pacote Labmaster</h1>
         <form id="pacoteForm">
             <div class="form-group">
                 <label for="laboratorio" style="color: #28a745;">Selecione o Laboratório:</label>
@@ -26,9 +25,10 @@
                 <label for="codigobarras" style="color: #28a745;">Código de Barras:</label>
                 <input type="text" name="codigobarras" id="codigobarras" class="form-control" required>
             </div>
+            <button type="button" id="adicionarPacote" class="btn btn-primary btn-block mt-3"><i class="fas fa-plus"></i> Adicionar Pacote</button>
         </form>
         <div id="pacotesList" class="mt-3"></div>
-        <button type="button" id="receberTodos" class="btn btn-success btn-block mt-3"><i class="fas fa-check"></i>Receber Todos</button>
+        <button type="button" id="receberTodos" class="btn btn-success btn-block mt-3"><i class="fas fa-check"></i> Receber Todos</button>
         <div class="text-center mt-3">
             <a href="index.php" class="btn btn-secondary"><i class="fas fa-angle-left"></i> Voltar</a>
         </div>
@@ -50,18 +50,35 @@
     <script>
         let pacotes = [];
 
-
-
-        document.getElementById('codigobarras').addEventListener('focusout', function() {
+        document.getElementById('adicionarPacote').addEventListener('click', function() {
             const codigobarras = document.getElementById('codigobarras').value;
             const laboratorio = document.getElementById('laboratorio').value;
+            const laboratorioNome = document.getElementById('laboratorio').options[document.getElementById('laboratorio').selectedIndex].text;
+            if (codigobarras && laboratorio) {
+                // Verificar duplicidade na lista dinâmica
+                if (verificarDuplicidade(codigobarras)) {
+                    alert('Este código de barras já foi adicionado.');
+                    return;
+                }
 
-            if (codigobarras) {
-
-                pacotes.unshift({ codigobarras, laboratorio });
-                atualizarListaPacotes();
-                document.getElementById('codigobarras').value = '';
-                document.getElementById('codigobarras').focus();
+                // Verificar se o pacote está com status "enviado"
+                verificarStatusEnviado(codigobarras, laboratorio)
+                    .then(statusEnviado => {
+                        if (statusEnviado) {
+                            pacotes.unshift({ codigobarras, laboratorio, laboratorioNome });
+                            atualizarListaPacotes();
+                            document.getElementById('codigobarras').value = '';
+                            document.getElementById('codigobarras').focus();
+                        } else {
+                            alert('Este pacote não está com status "enviado".');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro ao verificar status:', error);
+                        alert('Erro ao verificar status do pacote.');
+                    });
+            } else {
+                alert('Por favor, preencha todos os campos.');
             }
         });
 
@@ -80,15 +97,47 @@
             })
             .then(response => response.json())
             .then(data => {
-                if (data.status === 'success') {
-                    alert(data.message);
+                if (data && data.length > 0) {
+                    data.forEach(result => {
+                        if (result.status === 'success') {
+                            alert(result.message);
+                        } else {
+                            alert(result.message);
+                        }
+                    });
                     pacotes = [];
                     atualizarListaPacotes();
                 } else {
-                    alert(data.message);
+                    alert('Erro ao processar os pacotes.');
                 }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro ao conectar com o servidor.');
             });
         });
+
+        function verificarDuplicidade(codigo) {
+            return pacotes.some(pacote => pacote.codigobarras === codigo);
+        }
+
+        function verificarStatusEnviado(codigo, lab) {
+            return fetch('verificarStatus.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: 'codigobarras=' + encodeURIComponent(codigo) + '&laboratorio=' + encodeURIComponent(lab)
+            })
+            .then(response => response.json())
+            .then(data => {
+                return data.status === 'enviado';
+            })
+            .catch(error => {
+                console.error('Erro ao verificar status:', error);
+                throw error;
+            });
+        }
 
         function atualizarListaPacotes() {
             const lista = document.getElementById('pacotesList');
@@ -98,7 +147,7 @@
                 const item = document.createElement('div');
                 item.className = 'alert alert-secondary d-flex justify-content-between align-items-center';
                 item.innerHTML = `
-                    <span>Código de Barras: ${pacote.codigobarras}</span>
+                    <span>Laboratório: ${pacote.laboratorioNome}, Código de Barras: ${pacote.codigobarras}</span>
                     <button class="btn btn-danger btn-sm" onclick="removerPacote(${index})">Excluir</button>
                 `;
                 lista.appendChild(item);
@@ -125,7 +174,7 @@
 
             function resetTimer() {
                 clearTimeout(time);
-                time = setTimeout(logout, 900000);  // Tempo em milissegundos 900000 = (15 minutos)
+                time = setTimeout(logout, 900000);  // Tempo em milissegundos (15 minutos)
             }
         };
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastrar Amostra</title>
+    <title>Receber Pacote</title>
     <link rel="icon" type="image/png" href="icon2.png" sizes="32x32" />
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="styles.css" rel="stylesheet">
@@ -11,20 +11,28 @@
 </head>
 <body>
     <div class="container container-customlistas">
-        <h1 class="text-center mb-4" style="color: #28a745;">Cadastrar Amostra</h1>
+        <h1 class="text-center mb-4" style="color: #28a745;">Receber Pacote</h1>
         <form id="pacoteForm">
             <div class="form-group">
-                <label for="descricao" style="color: #28a745;">Descrição:</label>
-                <input type="text" name="descricao" id="descricao" class="form-control" required>
+                <label for="laboratorio" style="color: #28a745;">Selecione o Laboratório:</label>
+                <select id="laboratorio" class="form-control" required>
+                    <option value="">Selecione</option>
+                    <option value="GECOQ">GECOQ</option>
+                    <option value="GEMER">GEMER</option>
+                    <option value="GETDT">GETDT</option>
+                    <option value="REDOME">REDOME</option>
+                    <option value="NAT">NAT</option>
+                    <option value="GEHEM">GEHEM</option>
+                    <!-- Adicione os demais laboratórios aqui -->
+                </select>
             </div>
             <div class="form-group">
                 <label for="codigobarras" style="color: #28a745;">Código de Barras:</label>
                 <input type="text" name="codigobarras" id="codigobarras" class="form-control" required>
             </div>
-            <button type="button" id="adicionarPacote" class="btn btn-primary btn-block mt-3"><i class="fas fa-plus"></i> Adicionar Pacote</button>
         </form>
         <div id="pacotesList" class="mt-3"></div>
-        <button type="button" id="cadastrarTodos" class="btn btn-success btn-block mt-3"><i class="fas fa-check"></i> Cadastrar Todos</button>
+        <button type="button" id="receberTodos" class="btn btn-success btn-block mt-3"><i class="fas fa-check"></i>Receber Todos</button>
         <div class="text-center mt-3">
             <a href="index.php" class="btn btn-secondary"><i class="fas fa-angle-left"></i> Voltar</a>
         </div>
@@ -40,7 +48,7 @@
             </div>
         </div>
     </div>
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.6.0/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
@@ -54,11 +62,10 @@
                 return codigoBarras.slice(1);
             } else if ((digitoverificarp === 'B' || digitoverificarp === 'b') && !isNaN(digitoverificaru)) {
                 return codigoBarras.slice(0, -2) + '0' + codigoBarras.slice(-1);
-            } else if ((digitoverificarp === 'A' || digitoverificarp === 'a') && (digitoverificaru === 'B' || digitoverificaru === 'b')) {
+            } else if ((digitoverificarp === 'A' || digitoverificarp === 'A') && (digitoverificaru === 'A' || digitoverificaru === 'a')){
                 return codigoBarras.slice(1, -1);
-            } else if ((digitoverificarp === 'A' || digitoverificarp === 'a') && (digitoverificaru === 'A' || digitoverificaru === 'a')){
-                return codigoBarras.slice(1, -1);
-            } else {
+            }
+            else{
                 return codigoBarras;
             }
         }
@@ -66,52 +73,37 @@
             return pacotes.some(pacote => pacote.codigobarrasFiltrado === codigobarrasFiltrado);
         }
 
-        document.getElementById('adicionarPacote').addEventListener('click', function() {
-            const descricao = document.getElementById('descricao').value;
+        document.getElementById('codigobarras').addEventListener('focusout', function() {
             const codigobarras = document.getElementById('codigobarras').value;
+            const laboratorio = document.getElementById('laboratorio').value;
 
-            if (descricao && codigobarras) {
+            if (codigobarras && laboratorio) {
                 const codigobarrasFiltrado = filtrarCodigoBarras(codigobarras);
-
-                // Verificação de duplicidade na lista dinâmica
-                let duplicado = pacotes.some(pacote => pacote.codigobarras === codigobarrasFiltrado);
-
-                if (duplicado) {
-                    alert('Pacote com código de barras ' + codigobarrasFiltrado + ' já existe na lista.');
+                if (codigoBarrasDuplicado(codigobarrasFiltrado)) {
+                    alert('Código de barras duplicado.');
+                    document.getElementById('codigobarras').value = '';
+                    document.getElementById('codigobarras').focus();
                     return;
                 }
-
-                // Verificação de duplicidade no banco de dados
-                fetch('verificar_codigo_barras.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: 'codigobarras=' + encodeURIComponent(codigobarrasFiltrado)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'exists') {
-                        alert('Pacote com código de barras ' + codigobarrasFiltrado + ' já existe no banco de dados.');
-                    } else {
-                        pacotes.push({ descricao, codigobarras, codigobarrasFiltrado });
-                        atualizarListaPacotes();
-                        document.getElementById('codigobarras').value = '';
-                        document.getElementById('codigobarras').focus();
-                    }
-                });
-            } else {
-                alert('Por favor, preencha todos os campos.');
+                const pacote = {
+                    codigobarras: codigobarras,
+                    laboratorio: laboratorio,
+                    codigobarrasFiltrado: codigobarrasFiltrado
+                };
+                pacotes.unshift(pacote);
+                atualizarListaPacotes();
+                document.getElementById('codigobarras').value = '';
+                document.getElementById('codigobarras').focus();
             }
         });
 
-        document.getElementById('cadastrarTodos').addEventListener('click', function() {
+        document.getElementById('receberTodos').addEventListener('click', function() {
             if (pacotes.length === 0) {
-                alert('Nenhum pacote para cadastrar.');
+                alert('Nenhum pacote para receber.');
                 return;
             }
 
-            fetch('processar_pacotesC.php', {
+            fetch('processar_pacotesR.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded'
@@ -124,16 +116,9 @@
                     alert(data.message);
                     pacotes = [];
                     atualizarListaPacotes();
-                } else if (data.status === 'error') {
-                    alert(data.message);
-                    atualizarListaPacotes();
                 } else {
-                    alert('Erro ao cadastrar pacotes.');
+                    alert(data.message);
                 }
-            })
-            .catch(error => {
-                console.error('Erro:', error);
-                alert('Erro ao processar a solicitação.');
             });
         });
 
@@ -141,19 +126,17 @@
             const lista = document.getElementById('pacotesList');
             lista.innerHTML = '';
 
-            // Percorre a lista de pacotes invertida para adicionar no topo
-            for (let i = pacotes.length - 1; i >= 0; i--) {
-                const pacote = pacotes[i];
-
+            pacotes.forEach((pacote, index) => {
                 const item = document.createElement('div');
                 item.className = 'alert alert-secondary d-flex justify-content-between align-items-center';
                 item.innerHTML = `
-                    <span>Descrição: ${pacote.descricao}, Código de Barras: ${pacote.codigobarrasFiltrado}</span>
-                    <button class="btn btn-danger btn-sm" onclick="removerPacote(${i})">Excluir</button>
+                    <span>Laboratório: ${pacote.laboratorio}, Código de Barras: ${pacote.codigobarrasFiltrado}</span>
+                    <button class="btn btn-danger btn-sm" onclick="removerPacote(${index})">Excluir</button>
                 `;
                 lista.appendChild(item);
-            }
+            });
         }
+
         function removerPacote(index) {
             pacotes.splice(index, 1);
             atualizarListaPacotes();

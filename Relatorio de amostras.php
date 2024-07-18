@@ -143,12 +143,13 @@ class PDF extends FPDF
     // Page header
     function Header()
     {
-        $this->Image('icon2.png', 10, 6, 20); // Adicionar imagem (ajuste a posição e o tamanho conforme necessário)
+        $this->Image('icon2.png', 10, 6, 16); // Adicionar imagem (ajuste a posição e o tamanho conforme necessário)
         $this->SetFont('Arial', 'B', 8);
         $this->Cell(0, 5, utf8_decode('GOVERNO DO ESTADO DO PARÁ'), 0, 1, 'C');
         $this->Cell(0, 5, utf8_decode('SECRETARIA EXECUTIVA DE SAÚDE PÚBLICA'), 0, 1, 'C');
         $this->Cell(0, 5, utf8_decode('CENTRO DE HEMOTERAPIA E HEMATOLOGIA DO PARÁ'), 0, 1, 'C');
         $this->Cell(0, 5, utf8_decode('TV. PADRE EUTIQUIO, 2109 - Batista Campos TEL: (91) 3110-6500'), 0, 1, 'C');
+        $this->Ln(10);
     }
 
     // Page footer
@@ -173,12 +174,20 @@ class PDF extends FPDF
 
         $this->Cell(60, 10, 'Data: ______/__________/__________', 0, 1, 'L');
         
-
+        $this->Ln(10);
         
         $this->Cell(200, 10, utf8_decode('Responsável pelo Recebimento:___________________________________________________________________'), 0, 0, 'L');
 
         $this->Cell(60, 10, 'Data: ______/__________/__________', 0, 1, 'L');
     }
+    function CellColor($w, $h, $txt, $border=0, $ln=0, $align='', $fill=false, $link='')
+    {
+        if ($fill) {
+            $this->SetFillColor(50, 50, 50); // Cor de preenchimento (vermelho)
+        }
+        $this->Cell($w, $h, $txt, $border, $ln, $align, $fill, $link);
+    }
+
 }
 
 $pdf = new PDF();
@@ -189,6 +198,7 @@ $pdf->SetFont('Arial', 'B', 10);
 $pdf->Cell(0, 10, 'Lista de Pacotes', 0, 1, 'C');
 $pdf->Ln(5);
 $pdf->SetFont('Arial', 'B', 8);
+
 $pdf->Cell(30, 10, 'Codigo Barras', 1, 0, 'C');
 $pdf->Cell(17, 10, 'Status', 1, 0, 'C');
 $pdf->Cell(30, 10, 'Descricao', 1, 0, 'C');

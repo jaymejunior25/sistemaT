@@ -218,7 +218,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <button type="submit" class="btn btn-custom"><i class="fas fa-filter"></i> Filtrar</button>
         </form>
 
-        <form method="GET" action="Relatorio de amostras.php">
+        <form method="GET" action="Relatorio de amostras.php" target="_blank">
             <input type="hidden" name="filter" value="<?php echo htmlspecialchars($filter); ?>">
             <input type="hidden" name="local_id" value="<?php echo htmlspecialchars($local_id); ?>">
             <input type="hidden" name="searchType" value="<?php echo htmlspecialchars($searchType); ?>">

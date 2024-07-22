@@ -14,10 +14,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user && password_verify($senha, $user['senha'])) {
+        // Obter o nome da unidade para exibir 
+        $stmt = $dbconn->prepare("SELECT nome FROM unidadehemopa WHERE id = :id");
+        $stmt->execute([':id' =>$user['unidade_id']]);
+        $local = $stmt->fetch(PDO::FETCH_ASSOC);
+
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['usuario'];
         $_SESSION['user_type'] = $user['tipoconta'];
         $_SESSION['unidade_id'] = $user['unidade_id'];
+        $_SESSION['unidade_nome'] = $local['nome'];
         //$_SESSION['success_message'] = 'Login com Sucesso.';
         header('Location: index.php');
         exit();

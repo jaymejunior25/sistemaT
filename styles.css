@@ -27,6 +27,15 @@ body {
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
+.container-custom3 {
+    max-width: 1550px;
+    max-height: 600px;
+    margin: 50px auto;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
 .container-customlistas {
     max-width: 1200px;
     margin: 50px auto;
@@ -189,4 +198,5 @@ footer {
     max-height: 550px; /* Ajuste conforme necessário */
     overflow-y: auto;
     overflow-x: auto;
+    border-radius: 10px;
 }

@@ -11,7 +11,7 @@ $user_id = $_SESSION['user_id'];
 $user_type = $_SESSION['user_type'];
 $user_name = $_SESSION['username'];
 $local_id = $_SESSION['unidade_id'];
-
+$local_name = $_SESSION['unidade_nome'];
 // Definir a consulta SQL com base no tipo de usuário e local
 if ($user_type === 'admin') {
     $query = "SELECT p.*, l_envio.nome AS envio_nome, l_lab.nome AS lab_nome, u_envio.usuario AS enviado_por, u_recebimento.usuario AS recebido_por, u_cadastro.usuario AS cadastrado_por, l_cadastro.nome AS cadastro_nome 
@@ -99,8 +99,10 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <div class="content">
         <div class="container container-custom"  style="background-color: rgb(38, 168, 147);">
             <h1 class="text-center mb-4" style="color: #fff;">Bem-vindo ao Sistema de Gerenciamento de Envios e Recebimentos de Amostras: <?php echo ucfirst($user_name); ?></h1>
+            <h2 class="text-center mb-4" style="color: #fff;">Seu usuario esta vinculado a unidade: <?php echo ucfirst($local_name); ?></h2>
             <h2 class="text-center mb-4" style="color: #fff;">Você está logado como um Usuário Classe: <?php echo ucfirst($user_type); ?></h2>
         </div>
+        <div class="container container-custom3">
         <h2 class="text-center mb-4"style="color: rgb(38, 168, 147);"><i class="fas fa-vial"></i> Amostras no Local</h2>
         <div class="table-wrapper" style="position: relative;" id="managerTable">
             <table class="table table-bordered table-hover table-striped">
@@ -156,6 +158,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <?php endif; ?>
                 </tbody>
             </table>
+        </div>
         </div>
     </div>
     <div class="fixed-bottom toggle-footer cursor_to_down" id="footer_fixed">

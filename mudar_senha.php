@@ -70,6 +70,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <?php echo $_SESSION['error_message']; unset($_SESSION['error_message']); ?>
             </div>
         <?php endif; ?>
+        <div class="alert alert-info" role="alert">
+            A senha deve ter pelo menos 6 caracteres e incluir números e letras.
+        </div>
         <form method="POST" action="">
             <div class="form-group">
                 <label for="senha_atual" style="color: #28a745;">Senha Atual:</label>

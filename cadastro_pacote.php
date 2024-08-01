@@ -23,6 +23,9 @@
             </div>
             <button type="button" id="adicionarPacote" class="btn btn-primary btn-block mt-3"><i class="fas fa-plus"></i> Adicionar Pacote</button>
         </form>
+        <div class="mt-3">
+            <h4 id="totalPacotes" class="text-center"></h4> <!-- Total de Pacotes -->
+        </div>
         <div id="pacotesList" class="mt-3"></div>
         <button type="button" id="cadastrarTodos" class="btn btn-success btn-block mt-3"><i class="fas fa-check"></i> Cadastrar Todos</button>
         <div class="text-center mt-3">
@@ -139,7 +142,11 @@
 
         function atualizarListaPacotes() {
             const lista = document.getElementById('pacotesList');
+            const totalPacotes = document.getElementById('totalPacotes');
             lista.innerHTML = '';
+
+            // Atualizar o total de pacotes
+            totalPacotes.textContent = `Total de Amostras: ${pacotes.length}`;
 
             // Percorre a lista de pacotes invertida para adicionar no topo
             for (let i = pacotes.length - 1; i >= 0; i--) {

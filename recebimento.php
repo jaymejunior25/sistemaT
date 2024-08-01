@@ -71,6 +71,7 @@
                 return codigoBarras;
             }
         }
+        
 
         function codigoBarrasDuplicado(codigobarrasFiltrado) {
             return pacotes.some(pacote => pacote.codigobarrasFiltrado === codigobarrasFiltrado);
@@ -96,7 +97,7 @@
                     document.getElementById('codigobarras').focus();
                     return;
                 }
-                
+
                 // Verificar status "enviado"
                 fetch('verificar_status.php', {
                     method: 'POST',

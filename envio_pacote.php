@@ -8,18 +8,17 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $local_envio_id = $_SESSION['unidade_id'];
-$status_cadastro= 'cadastrado';
+$status_cadastro = 'cadastrado';
+$pacotes = [];
+
+// Processar o envio dos pacotes
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_password']) && isset($_POST['pacotes'])) {
-    // Obter pacotes selecionados
     $pacotes_selecionados = $_POST['pacotes'];
-    // Verificar a senha do usuário
     $stmt = $dbconn->prepare('SELECT senha FROM usuarios WHERE id = :id');
     $stmt->execute(['id' => $_SESSION['user_id']]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-
     if (password_verify($_POST['confirm_password'], $user['senha'])) {
-        // Atualizar todos os pacotes cadastrados para o status "enviado"
         $stmt = $dbconn->prepare("UPDATE pacotes SET status = 'enviado', data_envio = NOW(), unidade_envio_id = :unidade_envio_id, usuario_envio_id = :usuario_envio_id WHERE unidade_cadastro_id = :unidade_cadastro_id AND status = 'cadastrado'");
         $stmt->execute([
             ':unidade_envio_id' => $_SESSION['unidade_id'],
@@ -30,20 +29,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_password']) &&
     } else {
         $_SESSION['error_message'] = 'Senha incorreta. Por favor, tente novamente.';
     }
-    
 }
 
 // Obter a lista de pacotes cadastrados para o local do usuário
 $stmt = $dbconn->prepare("SELECT p.id, p.status, p.codigobarras, p.descricao,  p.data_cadastro, l_lab.nome AS lab_nome,
-                        u_cadastro.usuario AS cadastrado_por, l_cadastro.nome AS cadastro_nome  FROM pacotes p 
+                        u_cadastro.usuario AS cadastrado_por, l_cadastro.nome AS cadastro_nome  
+                        FROM pacotes p 
                         LEFT JOIN usuarios u_cadastro ON p.usuario_cadastro_id = u_cadastro.id 
                         LEFT JOIN unidadehemopa l_cadastro ON p.unidade_cadastro_id = l_cadastro.id 
                         LEFT JOIN laboratorio l_lab ON p.lab_id = l_lab.id
                         WHERE unidade_cadastro_id = :unidade_cadastro_id AND status = :status_cadastro ");
 $stmt->execute(['unidade_cadastro_id' => $local_envio_id, 'status_cadastro' => $status_cadastro]);
 $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-?>
 
+// Calcular o total de pacotes
+$totalPacotes = count($pacotes);
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -57,7 +58,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 </head>
 <body>
     <div class="container container-customlistas">
-        <h1 class="text-center mb-4" >Enviar Amostras</h1>
+        <h1 class="text-center mb-4">Enviar Amostras</h1>
         <?php if (isset($_SESSION['success_message'])): ?>
             <div class="alert alert-success">
                 <?php echo $_SESSION['success_message']; unset($_SESSION['success_message']); ?>
@@ -68,19 +69,22 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <?php echo $_SESSION['error_message']; unset($_SESSION['error_message']); ?>
             </div>
         <?php endif; ?>
+        <div class="mb-3 text-center">
+            <h4>Total de Amostras: <?php echo $totalPacotes; ?></h4> <!-- Total de Pacotes -->
+        </div>
         <form method="POST" action="" onsubmit="return confirmAction(event)">
             <div class="form-group">
-                <label for="pacotes" >Pacotes Cadastrados:</label>
+                <label for="pacotes">Pacotes Cadastrados:</label>
                 <div class="table-responsive">
                     <table class="table table-bordered table-hover table-striped">
                         <thead class="theadfixed">
                             <tr>
                                 <th>Descrição</th>
                                 <th>Código de Barras</th>
-                                <th>laboratorio</th>
+                                <th>Laboratório</th>
                                 <th>Data de Cadastro</th>
                                 <th>Cadastrado por</th>
-                                <th>Local de <br>Cadastro</th>
+                                <th>Local de Cadastro</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -98,12 +102,12 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     </table>
                 </div>
             </div>
-            <button type="submit" class="btn btn-custom btn-block"> <i class="fas fa-paper-plane"></i> Enviar</button>
+            <button type="submit" class="btn btn-custom btn-block"><i class="fas fa-paper-plane"></i> Enviar</button>
         </form>
         <div class="text-center mt-3">
             <a href="index.php" class="btn btn-secondary"><i class="fas fa-angle-left"></i> Voltar</a>
         </div>
-            <a href="logout.php" class="btn btn-danger btn-lg mt-3"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        <a href="logout.php" class="btn btn-danger btn-lg mt-3"><i class="fas fa-sign-out-alt"></i> Logout</a>
     </div>
     <!-- Modal de Confirmação -->
     <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModalLabel" aria-hidden="true">
@@ -150,8 +154,8 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             });
             //if (pacotes.length === 0) {
             //    alert('Por favor, selecione pelo menos um pacote.');
-             //   return false;
-           // }
+            //    return false;
+            //}
             document.getElementById('hidden_pacotes').value = JSON.stringify(pacotes);
             $('#confirmModal').modal('show');
         }
@@ -180,4 +184,3 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </script>
 </body>
 </html>
-

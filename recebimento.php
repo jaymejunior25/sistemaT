@@ -33,6 +33,7 @@
             <button type="button" id="adicionarPacote" class="btn btn-primary btn-block mt-3"><i class="fas fa-plus"></i> Adicionar Pacote</button>
         </form>
         <div id="pacotesList" class="mt-3"></div>
+        <div id="totalPacotes" class="text-center mt-3" style="font-size: 1.2em; color: #28a745;"></div>
         <button type="button" id="receberTodos" class="btn btn-success btn-block mt-3"><i class="fas fa-check"></i> Receber Todos</button>
         <div class="text-center mt-3">
             <a href="index.php" class="btn btn-secondary"><i class="fas fa-angle-left"></i> Voltar</a>
@@ -54,6 +55,7 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
         let pacotes = [];
+        let addingPackage = false;
 
         function filtrarCodigoBarras(codigoBarras) {
             let digitoverificarp = codigoBarras.charAt(0);
@@ -71,40 +73,34 @@
                 return codigoBarras;
             }
         }
-        
 
         function codigoBarrasDuplicado(codigobarrasFiltrado) {
             return pacotes.some(pacote => pacote.codigobarrasFiltrado === codigobarrasFiltrado);
         }
 
-        document.getElementById('adicionarPacote').addEventListener('click', function() {
+        function adicionarPacote() {
+            if (addingPackage) return;
+
+            addingPackage = true;
+            setTimeout(() => addingPackage = false, 1000); // Evita adicionar o mesmo pacote em menos de 1 segundo
+
             const codigobarras = document.getElementById('codigobarras').value;
             const laboratorio = document.getElementById('laboratorio').value;
 
             if (codigobarras && laboratorio) {
-                // Verificação de duplicidade na lista dinâmica
                 const codigobarrasFiltrado = filtrarCodigoBarras(codigobarras);
-                let duplicado = pacotes.some(pacote => pacote.codigobarras === codigobarrasFiltrado);
 
-                if (duplicado) {
+                if (codigoBarrasDuplicado(codigobarrasFiltrado)) {
                     alert('Pacote com código de barras ' + codigobarrasFiltrado + ' já existe na lista.');
                     return;
                 }
-                // Verificar duplicidade de código de barras
-                if (codigoBarrasDuplicado(codigobarrasFiltrado)) {
-                    alert('Código de barras duplicado.');
-                    document.getElementById('codigobarras').value = '';
-                    document.getElementById('codigobarras').focus();
-                    return;
-                }
 
-                // Verificar status "enviado"
                 fetch('verificar_status.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded'
                     },
-                    body: 'codigobarras=' + encodeURIComponent(codigobarrasFiltrado)+'&laboratorio=' + encodeURIComponent(laboratorio)
+                    body: 'codigobarras=' + encodeURIComponent(codigobarrasFiltrado) + '&laboratorio=' + encodeURIComponent(laboratorio)
                 })
                 .then(response => response.json())
                 .then(data => {
@@ -123,6 +119,15 @@
                 });
             } else {
                 alert('Por favor, preencha todos os campos.');
+            }
+        }
+
+        document.getElementById('adicionarPacote').addEventListener('click', adicionarPacote);
+
+        document.getElementById('codigobarras').addEventListener('keydown', function(event) {
+            if (event.key === 'Tab' || event.key === 'Enter') {
+                event.preventDefault();
+                adicionarPacote();
             }
         });
 
@@ -159,7 +164,6 @@
             const lista = document.getElementById('pacotesList');
             lista.innerHTML = '';
 
-            // Percorre a lista de pacotes de forma invertida para adicionar no topo
             for (let i = pacotes.length - 1; i >= 0; i--) {
                 const pacote = pacotes[i];
 
@@ -171,6 +175,7 @@
                 `;
                 lista.appendChild(item);
             }
+            document.getElementById('totalPacotes').textContent = `Total de Pacotes: ${pacotes.length}`;
         }
 
         function removerPacote(index) {

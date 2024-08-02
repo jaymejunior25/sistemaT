@@ -48,6 +48,7 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
         let pacotes = [];
+        let addingPackage = false;
 
         function filtrarCodigoBarras(codigoBarras) {
             let digitoverificarp = codigoBarras.charAt(0);
@@ -65,11 +66,17 @@
                 return codigoBarras;
             }
         }
+
         function codigoBarrasDuplicado(codigobarrasFiltrado) {
             return pacotes.some(pacote => pacote.codigobarrasFiltrado === codigobarrasFiltrado);
         }
 
-        document.getElementById('adicionarPacote').addEventListener('click', function() {
+        function adicionarPacote() {
+            if (addingPackage) return;
+
+            addingPackage = true;
+            setTimeout(() => addingPackage = false, 1000); // Evita adicionar o mesmo pacote em menos de 1 segundo
+
             const descricao = document.getElementById('descricao').value;
             const codigobarras = document.getElementById('codigobarras').value;
 
@@ -105,6 +112,15 @@
                 });
             } else {
                 alert('Por favor, preencha todos os campos.');
+            }
+        }
+
+        document.getElementById('adicionarPacote').addEventListener('click', adicionarPacote);
+
+        document.getElementById('codigobarras').addEventListener('keydown', function(event) {
+            if (event.key === 'Tab' || event.key === 'Enter') {
+                event.preventDefault();
+                adicionarPacote();
             }
         });
 
@@ -161,6 +177,7 @@
                 lista.appendChild(item);
             }
         }
+
         function removerPacote(index) {
             pacotes.splice(index, 1);
             atualizarListaPacotes();

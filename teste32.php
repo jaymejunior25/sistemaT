@@ -21,9 +21,10 @@ $filter = '';
 $local_id = '';
 $searchType = '';
 $searchQuery = '';
-$data_inicio = '';
 $dateType = '';
 $dateValue = '';
+$dateValue = '';
+$timeValue = '';
 $colunas_selecionadas = [];
 
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
@@ -43,14 +44,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
     if (isset($_GET['dateValue'])) {
         $dateValue = $_GET['dateValue'];
     }
-    if (isset($_GET['data_inicio'])) {
-        $data_inicio = $_GET['data_inicio'];
-    }
-    if (isset($_GET['columns'])) {
-        $colunas_selecionadas = $_GET['columns'];
+    if (isset($_GET['timeValue'])) {
+        $timeValue = $_GET['timeValue'];
     }
 }
-
 // Colunas disponíveis para seleção
 $available_columns = [
     'codigobarras' => 'Codigo de Barras',
@@ -59,27 +56,32 @@ $available_columns = [
     'lab_nome' => 'Laboratorio',
     'data_cadastro' => 'Data de Cadastro',
     'data_envio' => 'Data de Envio',
-
+    'data_recebimento' => 'Data de Recebimento',
     'envio_nome' => 'Local de Envio',
     'cadastrado_por' => 'Cadastrado por',
     'enviado_por' => 'Enviado por',
-
+    'recebido_por' => 'Recebido por'
 ];
+// Selecionar todas as colunas por padrão
+if (empty($_GET['columns'])) {
+    $colunas_selecionadas = array_keys($available_columns);
+} else {
+    $colunas_selecionadas = $_GET['columns'];
+}
 
 // Construir a consulta SQL com base nos filtros
-$sql = "SELECT p.id, p.status, p.codigobarras, p.descricao, p.data_envio, p.data_cadastro, l_lab.nome AS lab_nome, l_envio.nome AS envio_nome, u_envio.usuario AS enviado_por,
+$sql = "SELECT p.id, p.status, p.codigobarras, p.descricao, p.data_envio, p.data_recebimento, p.data_cadastro, l_lab.nome AS lab_nome, l_envio.nome AS envio_nome, u_envio.usuario AS enviado_por, u_recebimento.usuario AS recebido_por,
         u_cadastro.usuario AS cadastrado_por, l_cadastro.nome AS cadastro_nome 
         FROM pacotes p 
         LEFT JOIN unidadehemopa l_envio ON p.unidade_envio_id = l_envio.id 
         LEFT JOIN unidadehemopa l_cadastro ON p.unidade_cadastro_id = l_cadastro.id 
         LEFT JOIN usuarios u_cadastro ON p.usuario_cadastro_id = u_cadastro.id 
         LEFT JOIN usuarios u_envio ON p.usuario_envio_id = u_envio.id 
-        
+        LEFT JOIN usuarios u_recebimento ON p.usuario_recebimento_id = u_recebimento.id
         LEFT JOIN laboratorio l_lab ON p.lab_id = l_lab.id";
 
 $conditions = [];
 $params = [];
-
 
 if ($filter == 'enviados') {
     $conditions[] = "p.status = 'enviado'";
@@ -130,6 +132,9 @@ if (!empty($searchType) && !empty($searchQuery)) {
         case 'usuario_envio':
             $conditions[] = "LOWER(u_envio.usuario) LIKE :query";
             break;
+        case 'usuario_recebimento':
+            $conditions[] = "LOWER(u_recebimento.usuario) LIKE :query";
+            break;
         case 'unidade_envio':
             $conditions[] = "LOWER(l_envio.nome) LIKE :query";
             break;
@@ -149,23 +154,26 @@ if (!empty($dateType) && !empty($dateValue)) {
         case 'dataEnvio':
             $conditions[] = "DATE(p.data_envio) = :dateValue";
             break;
-        
+        case 'dataRecebimento':
+            $conditions[] = "DATE(p.data_recebimento) = :dateValue";
+            break;
         default:
             break;
     }
+    if (!empty($timeValue)) {
+        $timeCondition = "TIME(p.$dateType) >= :timeValue";
+        $dateCondition .= " AND $timeCondition";
+        $params[':timeValue'] = $timeValue;
+    }
+    $conditions[] = $dateCondition;
     $params[':dateValue'] = $dateValue;
-}
-
-if (!empty($data_inicio)) {
-    $conditions[] = "p.data_cadastro >= :data_inicio";
-    $params[':data_inicio'] = $data_inicio;
 }
 
 if (count($conditions) > 0) {
     $sql .= " WHERE " . implode(" AND ", $conditions);
 }
 
-$sql .= " AND data_recebimento IS NULL ORDER BY p.data_cadastro DESC";  // Ordenar por data de cadastro decrescente
+$sql .= " ORDER BY p.data_cadastro DESC";  // Ordenar por data de cadastro decrescente
 
 $stmt = $dbconn->prepare($sql);
 $stmt->execute($params);
@@ -185,102 +193,108 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 </head>
 <body>
     <div class="container container-custom2">
-        <h1 class="text-center mb-4" style="color: #28a745;">Listar Amostras</h1>
-        
-        
-        <!-- Formulário de seleção de colunas e data de início -->
-        <form method="GET" action="relatorio_pendencias.php" class="mb-4">
-            <div class="form-row">
-                <div class="form-group col-md-4">
-                    <label for="data_inicio">Data de Início:</label>
-                    <input type="date" class="form-control" id="data_inicio" name="data_inicio" value="<?php echo htmlspecialchars($data_inicio); ?>">
-                </div>
-                <div class="form-group col-md-8">
-                    <label for="columns">Selecionar Colunas:</label>
-                    <div class="form-check">
-                        <?php foreach ($available_columns as $column => $label): ?>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="checkbox" name="columns[]" id="column_<?php echo $column; ?>" value="<?php echo $column; ?>" checked <?php if (in_array($column, $colunas_selecionadas)) echo 'checked'; ?>>
-                                <label class="form-check-label" for="column_<?php echo $column; ?>"><?php echo htmlspecialchars($label); ?></label>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
+        <h1 class="text-center mb-4" style="color: #28a745;">Listar Pacotes</h1>
+        <?php if ($_SESSION['unidade_id'] != '1' || $_SESSION['user_type'] === 'admin'): ?>
+        <a href="cadastro_pacote.php" class="btn btn-custom"><i class="fas fa-plus"></i> Cadastar Amostras</a>
+        <?php endif; ?>
+        <form method="GET" action="" class="form-inline mb-4 justify-content-center">
+            <div class="form-group mr-3">
+                <label for="filter" class="mr-2" style="color: #28a745;">Status:</label>
+                <select name="filter" id="filter" class="form-control">
+                    <option value="">Todos</option>
+                    <option value="cadastrado" <?php if ($filter == 'cadastrado') echo 'selected'; ?>>Cadastrado</option>
+                    <option value="enviados" <?php if ($filter == 'enviados') echo 'selected'; ?>>Enviados</option>
+                    <option value="recebidos" <?php if ($filter == 'recebidos') echo 'selected'; ?>>Recebidos</option>
+                </select>
             </div>
-            <button type="submit" class="btn btn-custom"><i class="fas fa-filter"></i> Aplicar Seleção</button>
+            <div class="form-group mr-3">
+                <label for="local_id" class="mr-2" style="color: #28a745;">Local:</label>
+                <select name="local_id" id="local_id" class="form-control">
+                    <option value="">Todos</option>
+                    <?php foreach ($locais as $local): ?>
+                        <option value="<?php echo $local['id']; ?>" <?php if ($local_id == $local['id']) echo 'selected'; ?>>
+                            <?php echo htmlspecialchars($local['nome']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="form-group mr-3">
+                <label for="searchType" class="mr-2" style="color: #28a745;">Pesquisar por:</label>
+                <select name="searchType" id="searchType" class="form-control">
+                    <option value="">Selecionar</option>
+                    <option value="codigobarras" <?php if ($searchType == 'codigobarras') echo 'selected'; ?>>Código de Barras</option>
+                    <option value="usuario_cadastro" <?php if ($searchType == 'usuario_cadastro') echo 'selected'; ?>>Usuário que Cadastrou</option>
+                    <option value="usuario_envio" <?php if ($searchType == 'usuario_envio') echo 'selected'; ?>>Usuário que Enviou</option>
+                    <option value="usuario_recebimento" <?php if ($searchType == 'usuario_recebimento') echo 'selected'; ?>>Usuário que Recebeu</option>
+                    <option value="unidade_envio" <?php if ($searchType == 'unidade_envio') echo 'selected'; ?>>Unidade que Enviou</option>
+                    <option value="lab_nome" <?php if ($searchType == 'lab_nome') echo 'selected'; ?>>Nome do Laboratorio</option>
+                </select>
+            </div>
+            <div class="form-group mr-3">
+                <label for="searchQuery" class="mr-2" style="color: #28a745;">Consulta:</label>
+                <input type="text" name="searchQuery" id="searchQuery" class="form-control" value="<?php echo htmlspecialchars($searchQuery); ?>">
+            </div>
+            <div class="form-group mr-3">
+                <label for="dateType" class="mr-2" style="color: #28a745;">Tipo de Data:</label>
+                <select name="dateType" id="dateType" class="form-control">
+                    <option value="">Selecionar</option>
+                    <option value="dataCadastro" <?php if ($dateType == 'dataCadastro') echo 'selected'; ?>>Data de Cadastro</option>
+                    <option value="dataEnvio" <?php if ($dateType == 'dataEnvio') echo 'selected'; ?>>Data de Envio</option>
+                    <option value="dataRecebimento" <?php if ($dateType == 'dataRecebimento') echo 'selected'; ?>>Data de Recebimento</option>
+                </select>
+            </div>
+            <div class="form-group mr-3">
+                <input type="date" name="dateValue" id="dateValue" class="form-control" value="<?php echo htmlspecialchars($dateValue); ?>">
+            </div>
+            <div class="form-group mr-3">
+                <input type="time" name="timeValue" id="timeValue" class="form-control" value="<?php echo htmlspecialchars($timeValue); ?>">
+            </div>
+            <button type="submit" class="btn btn-custom"><i class="fas fa-search"></i> Filtrar</button>
         </form>
-
-        <!-- Exibir Tabela de Pacotes -->
-        <?php if (!empty($colunas_selecionadas)): ?>
-             <!-- Formulário de filtros -->
-             <form method="GET" action="relatorio_pendencias.php" class="form-inline justify-content-center">
-                <div class="form-group mb-2">
-                    <label for="filter" class="mr-2">Filtrar:</label>
-                    <select name="filter" id="filter" class="form-control">
-                        <option value="">Todos</option>
-                        <option value="enviados" <?php if ($filter == 'enviados') echo 'selected'; ?>>Enviados</option>
-                        <option value="recebidos" <?php if ($filter == 'recebidos') echo 'selected'; ?>>Recebidos</option>
-                        <option value="cadastrado" <?php if ($filter == 'cadastrado') echo 'selected'; ?>>Cadastrados</option>
-                    </select>
-                </div>
-                <div class="form-group mb-2 ml-2">
-                    <label for="local_id" class="mr-2">Local:</label>
-                    <select name="local_id" id="local_id" class="form-control">
-                        <option value="">Todos</option>
-                        <?php foreach ($locais as $local): ?>
-                            <option value="<?php echo $local['id']; ?>" <?php if ($local_id == $local['id']) echo 'selected'; ?>><?php echo htmlspecialchars($local['nome']); ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="form-group mb-2 ml-2">
-                    <label for="searchType" class="mr-2">Buscar por:</label>
-                    <select name="searchType" id="searchType" class="form-control">
-                        <option value="">Selecionar</optio>
-                        <option value="codigobarras" <?php if ($searchType == 'codigobarras') echo 'selected'; ?>>Codigo de Barras</option>
-                        <option value="usuario_cadastro" <?php if ($searchType == 'usuario_cadastro') echo 'selected'; ?>>Usuario de Cadastro</option>
-                        <option value="usuario_envio" <?php if ($searchType == 'usuario_envio') echo 'selected'; ?>>Usuario de Envio</option>
-                        
-                        <option value="unidade_envio" <?php if ($searchType == 'unidade_envio') echo 'selected'; ?>>Unidade de Envio</option>
-                        <option value="lab_nome" <?php if ($searchType == 'lab_nome') echo 'selected'; ?>>Laboratorio</option>
-                    </select>
-                </div>
-                <div class="form-group mb-2 ml-2">
-                        <label for="searchQuery" class="mr-2">Buscar:</label>
-                        <input type="text" name="searchQuery" id="searchQuery" class="form-control" value="<?php echo htmlspecialchars($searchQuery); ?>">
-                    </div>
-                    <div class="form-group mr-3">
-                    <label for="dateType" class="mr-2" style="color: #28a745;">Tipo de Data:</label>
-                    <select name="dateType" id="dateType" class="form-control">
-                        <option value="">Selecionar</option>
-                        <option value="dataCadastro" <?php if ($dateType == 'dataCadastro') echo 'selected'; ?>>Data de Cadastro</option>
-                        <option value="dataEnvio" <?php if ($dateType == 'dataEnvio') echo 'selected'; ?>>Data de Envio</option>
-                        
-                    </select>
-                </div>
-                <div class="form-group mr-3">
-                    <label for="dateValue" class="mr-2" style="color: #28a745;">Data:</label>
-                    <input type="date" name="dateValue" id="dateValue" class="form-control" value="<?php echo htmlspecialchars($dateValue); ?>">
-                </div>
+        <div class="card mb-4">
+            <div class="card-header" style="background-color: #28a745; color: white;">Selecionar colunas para exibição</div>
+            <div class="card-body">
+                <form method="GET" action="" class="form-inline">
+                    <?php foreach ($available_columns as $key => $label): ?>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" id="column_<?php echo $key; ?>" name="columns[]" value="<?php echo $key; ?>" <?php if (in_array($key, $colunas_selecionadas)) echo 'checked'; ?>>
+                            <label class="form-check-label" for="column_<?php echo $key; ?>"><?php echo $label; ?></label>
+                        </div>
+                    <?php endforeach; ?>
+                    <button type="submit" class="btn btn-custom"><i class="fas fa-filter"></i> Atualizar Colunas</button>
+                </form>
+            </div>
+        </div>
+        <form method="post" action="Relatorio de pendencias pdf.php" target="_blank">
                 <input type="hidden" name="data_inicio" value="<?php echo htmlspecialchars($data_inicio); ?>">
-                <?php foreach ($colunas_selecionadas as $column): ?>
-                    <input type="hidden" name="columns[]" value="<?php echo htmlspecialchars($column); ?>">
+                <?php foreach ($colunas_selecionadas as $coluna): ?>
+                    <input type="hidden" name="colunas[]" value="<?php echo htmlspecialchars($coluna); ?>">
                 <?php endforeach; ?>
-                <button type="submit" class="btn btn-custom mb-2 ml-2"><i class="fas fa-search"></i> Filtrar</button>
+                <button type="submit" class="btn btn-danger"><i class="far fa-file-pdf"></i> Baixar PDF</button>
             </form>
-            <div class="table-responsive">
-                <table class="table table-striped table-bordered table-hover">
-                    <thead class="theadfixed">
-                        <tr>
-                            <?php foreach ($colunas_selecionadas as $column): ?>
-                                <th><?php echo htmlspecialchars($available_columns[$column]); ?></th>
-                            <?php endforeach; ?>
-                            <?php if ($_SESSION['user_type'] === 'admin'): ?>
-                                <th>Ações</th>
-                            <?php endif; ?>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (!empty($pacotes)): ?>
+        <form method="GET" action="Relatorio de amostras.php" target="_blank">
+            <input type="hidden" name="filter" value="<?php echo htmlspecialchars($filter); ?>">
+            <input type="hidden" name="local_id" value="<?php echo htmlspecialchars($local_id); ?>">
+            <input type="hidden" name="searchType" value="<?php echo htmlspecialchars($searchType); ?>">
+            <input type="hidden" name="searchQuery" value="<?php echo htmlspecialchars($searchQuery); ?>">
+            <input type="hidden" name="dateType" value="<?php echo htmlspecialchars($dateType); ?>">
+            <input type="hidden" name="dateValue" value="<?php echo htmlspecialchars($dateValue); ?>">
+            <button type="submit" class="btn btn-custom"><i class="fas fa-file-pdf"></i> Gerar PDF</button>
+        </form>
+        <div class="table-responsive">  
+        <div class="table-wrapper" style="position: relative;" id="managerTable">  
+            <table class="table table-bordered table-hover table-striped" >
+                <thead class="theadfixed">
+                    <tr>
+                        <?php foreach ($colunas_selecionadas as $coluna): ?>
+                            <th><?php echo $available_columns[$coluna]; ?></th>
+                        <?php endforeach; ?>
+                    
+                        <?php if ($_SESSION['user_type'] === 'admin'): ?><th>Ações</th><?php endif; ?>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php if (!empty($pacotes)): ?>
                             <?php foreach ($pacotes as $pacote): ?>
                                 <tr>
                                     <?php foreach ($colunas_selecionadas as $column): ?>
@@ -311,7 +325,9 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                 case 'data_envio':
                                                     echo htmlspecialchars($pacote['data_envio']);
                                                     break;
-                                               
+                                                case 'data_recebimento':
+                                                    echo htmlspecialchars($pacote['data_recebimento']);
+                                                    break;
                                                 case 'envio_nome':
                                                     echo htmlspecialchars($pacote['envio_nome']);
                                                     break;
@@ -321,7 +337,9 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                 case 'enviado_por':
                                                     echo htmlspecialchars($pacote['enviado_por']);
                                                     break;
-                                                
+                                                case 'recebido_por':
+                                                    echo htmlspecialchars($pacote['recebido_por']);
+                                                    break;
                                                 default:
                                                     break;
                                             }
@@ -341,29 +359,25 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <td colspan="<?php echo count($colunas_selecionadas) + 1; ?>" class="text-center">Nenhum pacote encontrado.</td>
                             </tr>
                         <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Exibir o número de resultados -->
-            <div class="text-center mb-4">
-                <p><strong>Total de Amostras:</strong> <?php echo count($pacotes); ?></p>
-            </div>
-            <form method="post" action="Relatorio de pendencias pdf.php" target="_blank">
-                <input type="hidden" name="data_inicio" value="<?php echo htmlspecialchars($data_inicio); ?>">
-                <?php foreach ($colunas_selecionadas as $coluna): ?>
-                    <input type="hidden" name="colunas[]" value="<?php echo htmlspecialchars($coluna); ?>">
-                <?php endforeach; ?>
-                <button type="submit" class="btn btn-danger"><i class="far fa-file-pdf"></i> Baixar PDF</button>
-            </form>
+                </tbody>
+            </table>
             
-           
-        <?php endif; ?>
+        </div>
+        </div>
+        <!-- Exibir o número de resultados -->
+        <div class="text-center mb-4">
+                <p><strong>Total de Amostras:</strong> <?php echo count($pacotes); ?></p>
+        </div>
+        
         <div class="text-center mt-3">
-                <a href="index.php" class="btn btn-secondary"><i class="fas fa-angle-left"></i> Voltar</a>
-            </div>
-        <a href="logout.php" class="btn btn-danger btn-lg mt-3"><i class="fas fa-sign-out-alt"></i> Logout</a>
-    </div>
+            <a href="index.php" class="btn btn-secondary">  <i class="fas fa-angle-left"></i> Voltar</a>
+        </div>
+        <a href="logout.php" class="btn btn-danger btn-lg mt-3">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </div> 
+        
+
     <div class="fixed-bottom toggle-footer cursor_to_down" id="footer_fixed">
         <div class="fixed-bottom border-top bg-light text-center footer-content p-2" style="z-index:4;">
             <div class="footer-text">
@@ -372,10 +386,41 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </div>
         </div>
     </div>
+
+    <!-- Modal de Confirmação de Senha -->
+    <div class="modal fade" id="confirmPasswordModal" tabindex="-1" role="dialog" aria-labelledby="confirmPasswordModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmPasswordModalLabel">Confirmação de Senha</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="deleteForm" method="POST" action="excluir_pacotes.php">
+                        <input type="hidden" name="id" id="pacoteIdToDelete">
+                        <div class="form-group">
+                            <label for="senha_confirmacao">Digite sua senha:</label>
+                            <input type="password" class="form-control" id="senha_confirmacao" name="senha_confirmacao" required>
+                        </div>
+                        <button type="submit" class="btn btn-danger">Confirmar Exclusão</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.6.0/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
+        function openDeleteModal(pacoteId) {
+            $('#pacoteIdToDelete').val(pacoteId);
+            $('#confirmPasswordModal').modal('show');
+        }
+
+        // Função para monitorar inatividade
         let inactivityTime = function () {
             let time;
             window.onload = resetTimer;
@@ -391,7 +436,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             function resetTimer() {
                 clearTimeout(time);
-                time = setTimeout(logout, 900000);
+                time = setTimeout(logout, 900000);  // Tempo em milissegundos 900000 = (15 minutos)
             }
         };
 
@@ -399,4 +444,3 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </script>
 </body>
 </html>
-

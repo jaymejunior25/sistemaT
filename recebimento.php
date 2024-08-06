@@ -109,7 +109,10 @@
                         atualizarListaPacotes();
                         document.getElementById('codigobarras').value = '';
                         document.getElementById('codigobarras').focus();
-                    } else {
+                    }else if (data.status === 'recebido'){
+                        alert('A amostra referente ao código de barras ' + codigobarrasFiltrado + ' ja foi recebida');
+                    } 
+                    else {
                         alert('A amostra referente ao código de barras ' + codigobarrasFiltrado + ' não está com status "enviado" ou o Laboratorio selecionado não é compativel com o do Codigo de Barras.');
                     }
                 })

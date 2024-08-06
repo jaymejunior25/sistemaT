@@ -12,11 +12,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $laboratorio = $_POST['laboratorio'];
 
     // Verificar se o pacote está com status "enviado"
-    $stmt = $dbconn->prepare("SELECT * FROM pacotes WHERE codigobarras = :codigobarras AND status = 'enviado'");
+    $stmt = $dbconn->prepare("SELECT * FROM pacotes WHERE codigobarras = :codigobarras ");
     $stmt->execute([':codigobarras' => $codigobarras]);
     $pacote_enviado = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($pacote_enviado) {
+    if ($pacote_enviado['status'] === 'enviado') {
         // Separa o primeiro e o último dígito do código de barras
         $digitoverificarp = substr($codigobarras, 0, 1);
         $digitoverificaru = substr($codigobarras, -1);
@@ -61,8 +61,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } else {
             echo json_encode(['status' => 'nao_compativel']);
         }
-    } else {
-        echo json_encode(['status' => 'nao_enviado']);
+    } elseif ($pacote_enviado['status'] === 'recebido') {
+        echo json_encode(['status' => 'recebido']);
+    } else{
+        echo json_encode(['status' => 'não enviado']);
     }
 }
 ?>

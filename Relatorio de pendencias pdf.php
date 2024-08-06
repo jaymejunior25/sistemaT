@@ -97,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     // Cabeçalho
     foreach ($colunas_selecionadas as $coluna) {
-        $pdf->Cell(35, 7, ucwords(str_replace('_', ' ', $coluna)), 1, 0, 'C');
+        $pdf->Cell(30, 7, ucwords(str_replace('_', ' ', $coluna)), 1, 0, 'C');
     }
     $pdf->Ln();
 
@@ -106,16 +106,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     foreach ($pacotes as $row) {
         foreach ($colunas_selecionadas as $coluna) {
             if (strpos($coluna, 'data') !== false && !empty($row[$coluna])) {
-                $pdf->Cell(35, 6, utf8_decode(date("d-m-Y", strtotime($row[$coluna]))), 1, 0, 'C');
+                $pdf->Cell(30, 6, utf8_decode(date("d-m-Y", strtotime($row[$coluna]))), 1, 0, 'C');
             } else {
-                $pdf->Cell(35, 6, utf8_decode($row[$coluna]), 1, 0, 'C');
+                $pdf->Cell(30, 6, utf8_decode($row[$coluna]), 1, 0, 'C');
             }
         }
         $pdf->Ln();
     }
 
     // Adicionar página de assinatura
-    $pdf->SignaturePage();
+    //$pdf->SignaturePage();
 
     $pdf->Output();
     exit;

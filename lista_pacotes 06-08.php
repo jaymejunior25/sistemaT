@@ -181,16 +181,28 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <link rel="icon" type="image/png" href="icon2.png" sizes="32x32" />
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="path/to/font-awesome/css/font-awesome.min.css">
-    <link href="styles.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
-
+    
     <style>
         body {
             margin: 0;
             padding: 0;
         }
         
+        .side-panel {
+            height: 92vh; /* Ocupa toda a altura da tela */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px;
+            background-color: #e0f2f1; /* Tom de verde claro */
+            padding-top: 20px;
+            overflow-y: auto;
+        }
+
+
         .main-content {
+            
+            margin-left: 270px;
             padding: 20px;
             height: calc(100vh - 40px); /* Ajusta a altura para ocupar o restante da tela */
             overflow-y: auto;
@@ -213,122 +225,124 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             bottom: 0;
             width: 100%;
         }
-
+        .th.fixed {
+            top: 0;
+            z-index: 2;
+            position: sticky;
+            background-color: white;
+        }
+        .theadfixed{
+            position: sticky;
+            top: 0;
+            background-color: rgb(38, 168, 147);
+            color: aliceblue;
+        }
     </style>
 </head>
 <body>
-    <div class="container container-custom2">
-        <h2>Listagem de Amostras</h2>
+    <div class="side-panel">
+        <h4>Filtrar Amostras</h4>
+        <button onclick="location.href='index.php'" class="btn btn-secondary btn-block">Voltar</button>
+        <form method="get" action="">
+            <div class="form-group">
+                <label for="filter">Filtrar por Status:</label>
+                <select name="filter" id="filter" class="form-control">
+                    <option value="">Todos</option>
+                    <option value="enviados" <?= ($filter == 'enviados') ? 'selected' : '' ?>>Enviados</option>
+                    <option value="recebidos" <?= ($filter == 'recebidos') ? 'selected' : '' ?>>Recebidos</option>
+                    <option value="cadastrado" <?= ($filter == 'cadastrado') ? 'selected' : '' ?>>Cadastrados</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="local_id">Local:</label>
+                <select name="local_id" id="local_id" class="form-control">
+                    <option value="">Todos</option>
+                    <?php foreach ($locais as $local): ?>
+                        <option value="<?= $local['id'] ?>" <?= ($local_id == $local['id']) ? 'selected' : '' ?>><?= htmlspecialchars($local['nome']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="searchType">Tipo de Busca:</label>
+                <select name="searchType" id="searchType" class="form-control">
+                    <option value="">Selecionar</option>
+                    <option value="codigobarras" <?= ($searchType == 'codigobarras') ? 'selected' : '' ?>>Codigo de Barras</option>
+                    <option value="usuario_cadastro" <?= ($searchType == 'usuario_cadastro') ? 'selected' : '' ?>>Usuario Cadastro</option>
+                    <option value="usuario_envio" <?= ($searchType == 'usuario_envio') ? 'selected' : '' ?>>Usuario Envio</option>
+                    <option value="usuario_recebimento" <?= ($searchType == 'usuario_recebimento') ? 'selected' : '' ?>>Usuario Recebimento</option>
+                    <option value="unidade_envio" <?= ($searchType == 'unidade_envio') ? 'selected' : '' ?>>Unidade Envio</option>
+                    <option value="lab_nome" <?= ($searchType == 'lab_nome') ? 'selected' : '' ?>>Laboratorio</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="searchQuery">Busca:</label>
+                <input type="text" name="searchQuery" id="searchQuery" class="form-control" value="<?= htmlspecialchars($searchQuery) ?>">
+            </div>
+
+            <div class="form-group">
+                <label for="dateType">Tipo de Data:</label>
+                <select name="dateType" id="dateType" class="form-control">
+                    <option value="">Selecionar</option>
+                    <option value="dataCadastro" <?= ($dateType == 'dataCadastro') ? 'selected' : '' ?>>Data de Cadastro</option>
+                    <option value="dataEnvio" <?= ($dateType == 'dataEnvio') ? 'selected' : '' ?>>Data de Envio</option>
+                    <option value="dataRecebimento" <?= ($dateType == 'dataRecebimento') ? 'selected' : '' ?>>Data de Recebimento</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="dateValue">Data:</label>
+                <input type="date" name="dateValue" id="dateValue" class="form-control" value="<?= htmlspecialchars($dateValue) ?>">
+            </div>
+
+            <div class="form-group">
+                <label for="timeType">Tipo de Hora:</label>
+                <select name="timeType" id="timeType" class="form-control">
+                    <option value="">Selecionar</option>
+                    <option value="horaEnvio" <?= ($timeType == 'horaEnvio') ? 'selected' : '' ?>>Hora de Envio</option>
+                    <option value="horaRecebimento" <?= ($timeType == 'horaRecebimento') ? 'selected' : '' ?>>Hora de Recebimento</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="timeStart">Hora de Início:</label>
+                <input type="time" name="timeStart" id="timeStart" class="form-control" value="<?= htmlspecialchars($timeStart) ?>">
+            </div>
+
+            <div class="form-group">
+                <label for="timeEnd">Hora de Fim:</label>
+                <input type="time" name="timeEnd" id="timeEnd" class="form-control" value="<?= htmlspecialchars($timeEnd) ?>">
+            </div>
+
+            <div class="form-group">
+                <label>Colunas a Exibir:</label><br>
+                <?php foreach ($available_columns as $column_key => $column_label): ?>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="columns[]" id="<?= $column_key ?>" value="<?= $column_key ?>" <?= in_array($column_key, $colunas_selecionadas) ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="<?= $column_key ?>"><?= $column_label ?></label>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a href="pdf_filtro.php?filter=<?= urlencode($filter) ?>&local_id=<?= urlencode($local_id) ?>&searchType=<?= urlencode($searchType) ?>&searchQuery=<?= urlencode($searchQuery) ?>&dateType=<?= urlencode($dateType) ?>&dateValue=<?= urlencode($dateValue) ?>&timeType=<?= urlencode($timeType) ?>&timeStart=<?= urlencode($timeStart) ?>&timeEnd=<?= urlencode($timeEnd) ?>&columns[]=<?= implode('&columns[]=', $colunas_selecionadas) ?>" class="btn btn-success mt-3">Exportar para PDF</a>
+        </form>
+        <br>
+        
+        <button onclick="location.href='index.php'" class="btn btn-secondary btn-block">Voltar</button>
+        <button onclick="location.href='logout.php'" class="btn btn-danger btn-block">Logout</button>
+    </div>
+
+    <div class="main-content">
+        <h2>Listagem de Amostars</h2>
         <p><strong>Total de Amostras:</strong> <?php echo count($pacotes); ?></p>
-
-        <!-- Filtros e Botões -->
-        <div class="row justify-content-between mb-3">
-            <form method="get" action="">
-                <div class="form-row">
-                    <div class="col-md-2">
-                        <label for="filter">Filtrar por Status:</label>
-                        <select name="filter" id="filter" class="form-control">
-                            <option value="">Todos</option>
-                            <option value="cadastrado" <?php if ($filter == 'cadastrado') echo 'selected'; ?>>Cadastrado</option>
-                            <option value="enviados" <?php if ($filter == 'enviados') echo 'selected'; ?>>Enviado</option>
-                            <option value="recebidos" <?php if ($filter == 'recebidos') echo 'selected'; ?>>Recebido</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label for="local_id">Filtrar por Unidade:</label>
-                        <select name="local_id" id="local_id" class="form-control">
-                            <option value="">Todos</option>
-                            <?php foreach ($locais as $local): ?>
-                                <option value="<?php echo $local['id']; ?>" <?php if ($local_id == $local['id']) echo 'selected'; ?>><?php echo $local['nome']; ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label for="searchType">Tipo de Pesquisa:</label>
-                        <select name="searchType" id="searchType" class="form-control">
-                            <option value="">Nenhum</option>
-                            <option value="codigobarras" <?php if ($searchType == 'codigobarras') echo 'selected'; ?>>Código de Barras</option>
-                            <option value="usuario_cadastro" <?php if ($searchType == 'usuario_cadastro') echo 'selected'; ?>>Cadastrado por</option>
-                            <option value="usuario_envio" <?php if ($searchType == 'usuario_envio') echo 'selected'; ?>>Enviado por</option>
-                            <option value="usuario_recebimento" <?php if ($searchType == 'usuario_recebimento') echo 'selected'; ?>>Recebido por</option>
-                            <option value="unidade_envio" <?php if ($searchType == 'unidade_envio') echo 'selected'; ?>>Unidade de Envio</option>
-                            <option value="lab_nome" <?php if ($searchType == 'lab_nome') echo 'selected'; ?>>Laboratório</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label for="searchQuery">Pesquisar:</label>
-                        <input type="text" name="searchQuery" id="searchQuery" value="<?php echo htmlspecialchars($searchQuery); ?>" class="form-control">
-                    </div>
-                    <div class="col-md-2">
-                        <label for="dateType">Tipo de Data:</label>
-                        <select name="dateType" id="dateType" class="form-control">
-                            <option value="">Nenhum</option>
-                            <option value="dataCadastro" <?php if ($dateType == 'dataCadastro') echo 'selected'; ?>>Data de Cadastro</option>
-                            <option value="dataEnvio" <?php if ($dateType == 'dataEnvio') echo 'selected'; ?>>Data de Envio</option>
-                            <option value="dataRecebimento" <?php if ($dateType == 'dataRecebimento') echo 'selected'; ?>>Data de Recebimento</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label for="dateValue">Data:</label>
-                        <input type="date" name="dateValue" id="dateValue" value="<?php echo htmlspecialchars($dateValue); ?>" class="form-control">
-                    </div>
-                    <div class="col-md-2">
-                        <label for="timeType">Filtrar por Hora:</label>
-                        <select name="timeType" id="timeType" class="form-control">
-                            <option value="">Nenhum</option>
-                            <option value="horaEnvio" <?php if ($timeType == 'horaEnvio') echo 'selected'; ?>>Hora de Envio</option>
-                            <option value="horaRecebimento" <?php if ($timeType == 'horaRecebimento') echo 'selected'; ?>>Hora de Recebimento</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label for="timeStart">Hora de Início:</label>
-                        <input type="time" name="timeStart" id="timeStart" value="<?php echo htmlspecialchars($timeStart); ?>" class="form-control">
-                    </div>
-                    <div class="col-md-2">
-                        <label for="timeEnd">Hora de Fim:</label>
-                        <input type="time" name="timeEnd" id="timeEnd" value="<?php echo htmlspecialchars($timeEnd); ?>" class="form-control">
-                    </div>
-                    <div class="col-md-2">
-                        <label>Colunas:</label>
-                        <div class="form-check">
-                            <?php foreach ($available_columns as $column_key => $column_label): ?>
-                                <div>
-                                    <input type="checkbox" name="columns[]" value="<?php echo $column_key; ?>" id="<?php echo $column_key; ?>" class="form-check-input" <?php if (in_array($column_key, $colunas_selecionadas)) echo 'checked'; ?>>
-                                    <label for="<?php echo $column_key; ?>" class="form-check-label"><?php echo $column_label; ?></label>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-                </div>
-                <div class="form-row mt-2">
-                    <div class="col-md-4">
-                        <button type="submit" class="btn btn-primary">Aplicar Filtros</button>
-                        <a href="teste31.php" class="btn btn-secondary">Resetar Filtros</a>
-                    </div>
-                    <div class="col-md-4">
-                        <button type="button" onclick="exportToExcel()" class="btn btn-success">Exportar para Excel</button>
-                        <a href="pdf_filtro.php?filter=<?= urlencode($filter) ?>&local_id=<?= urlencode($local_id) ?>&searchType=<?= urlencode($searchType) ?>&searchQuery=<?= urlencode($searchQuery) ?>&dateType=<?= urlencode($dateType) ?>&dateValue=<?= urlencode($dateValue) ?>&timeType=<?= urlencode($timeType) ?>&timeStart=<?= urlencode($timeStart) ?>&timeEnd=<?= urlencode($timeEnd) ?>&columns[]=<?= implode('&columns[]=', $colunas_selecionadas) ?>" class="btn btn-danger" target="_blank">Gerar PDF</a>
-                    </div>
-                    <!--<div class="col-md-4">
-                    <button onclick="location.href='index.php'" class="btn btn-secondary">Voltar</button>
-
-                    </div>-->
-                    <div class="col-md-4">
-                        <a href="index.php" class="btn btn-secondary"><i class="fas fa-angle-left"></i> Voltar</a>
-                        <a href="logout.php" class="btn btn-danger "><i class="fas fa-sign-out-alt"></i> Logout</a>
-                    </div>
-
-                    
-                </div>
-            </form>
-        </div>
-        <!-- Tabela -->
         <div class="table-responsive">
             <table class="table table-bordered table-striped">
                 <thead class="theadfixed">
                     <tr>
                         <?php foreach ($colunas_selecionadas as $coluna): ?>
-                            <th><?php echo $available_columns[$coluna]; ?></th>
+                            <th><?= $available_columns[$coluna] ?></th>
                         <?php endforeach; ?>
                         <?php if ($_SESSION['user_type'] === 'admin'): ?><th>Ações</th><?php endif; ?>
                     </tr>
@@ -338,39 +352,29 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <tr>
                             <?php foreach ($colunas_selecionadas as $coluna): ?>
                                 <td>
-                                    
                                     <?php
-                                    
+                                    // Formatação específica para campos de data e hora
                                     if ($coluna == 'data_cadastro' || $coluna == 'data_envio' || $coluna == 'data_recebimento') {
-                                        $data = $pacote[$coluna];
-                                        if ($data) {
-                                            $dateTime = new DateTime($data);
-                                            echo $dateTime->format('d-m-Y H:i');
-                                        }
-                                    } elseif ($coluna == 'status') {
-                                        if ($pacote['status'] == 'cadastrado') {
-                                            echo '<span class="badge badge-danger">cadastrado</span>';
-                                        } elseif ($pacote['status'] == 'enviado') {
-                                            echo '<span class="badge badge-warning">enviado</span>';
-                                        } elseif ($pacote['status'] == 'recebido') {
-                                            echo '<span class="badge badge-success">recebido</span>';
-                                        }
-                                    } else {
-                                        echo htmlspecialchars($pacote[$coluna]);
+                                        echo date('d-m-Y H:i', strtotime($pacote[$coluna]));
+                                    } else { 
+                                       echo htmlspecialchars($pacote[$coluna]);
                                     }
                                     ?>
                                 </td>
                             <?php endforeach; ?>
-                            <?php if ($_SESSION['user_type'] === 'admin'): ?>
-                                <td class="btn-group-vertical">
+                            <?php if ($_SESSION['user_type'] === 'admin'): ?><td>
                                     <a href="editar_pacote.php?id=<?php echo $pacote['id']; ?>" class="btn btn-primary btn-sm">Editar</a>
                                     <button type="button"  class="btn btn-danger btn-sm" onclick="openDeleteModal(<?php echo $pacote['id']; ?>)">Excluir</button>
                                 </td><?php endif; ?>
+                            <?php endforeach; ?>
+                            
+
                         </tr>
-                    <?php endforeach; ?>
+
                 </tbody>
             </table>
         </div>
+        
     </div>
     <div class="fixed-bottom toggle-footer cursor_to_down" id="footer_fixed">
         <div class="fixed-bottom border-top bg-light text-center footer-content p-2" style="z-index:4;">
@@ -404,20 +408,11 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </div>
         </div>
     </div>
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
-        function exportToExcel() {
-            var url = 'export_excel.php?' + $('form').serialize();
-            window.location.href = url;
-        }
-
-        function generatePDF() {
-            var url = 'gerar_pdf.php?' + $('form').serialize();
-            
-            window.location.href = url;
-        }
         function openDeleteModal(pacoteId) {
             $('#pacoteIdToDelete').val(pacoteId);
             $('#confirmPasswordModal').modal('show');

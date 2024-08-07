@@ -21,9 +21,9 @@ $available_columns = [
     'status' => 'Status',
     'descricao' => 'Descrição',
     'lab_nome' => 'Laboratorio',
-    'data_cadastro' => 'Data de Cadastro',
-    'data_envio' => 'Data de Envio',
-    'data_recebimento' => 'Data de Recebimento',
+    'data_cadastro' => 'Dt de Cadastro',
+    'data_envio' => 'Dt de Envio',
+    'data_recebimento' => 'Dt de Recebimento',
     'envio_nome' => 'Local de Envio',
     'cadastrado_por' => 'Cadastrado por',
     'enviado_por' => 'Enviado por',
@@ -188,7 +188,17 @@ class PDF extends FPDF
         $this->Cell(200, 10, utf8_decode('Responsável pelo Recebimento:___________________________________________________________________'), 0, 0, 'L');
         $this->Cell(60, 10, 'Data: ______/__________/__________', 0, 1, 'L');
     }
-
+    // Adicionar o total de linhas no cabeçalho da tabela
+    function TableHeader($columns, $totalRows)
+    {
+        $this->SetFont('Arial', 'B', 8);
+        $this->Cell(0, 10, 'Total de Linhas: ' . $totalRows, 0, 1, 'L');
+        $this->Ln(5);
+        foreach ($columns as $coluna) {
+            $this->Cell(26, 8, utf8_decode($coluna), 1, 0, 'C');
+        }
+        $this->Ln();
+    }
     // Método para colorir célula
     function CellColor($w, $h, $txt, $border=0, $ln=0, $align='', $fill=false, $link='')
     {
@@ -214,35 +224,84 @@ class PDF extends FPDF
             $x = ($page_width - $table_width) / 2 + $this->lMargin;
             $this->SetX($x);
         }
+        // Adicionar quebra de linha na célula de descrição
+        function MultiCellDescription($text, $width, &$maxHeight)
+        {
+            $this->SetFont('Arial', '', 6);
+            
+            // Posição inicial
+            $x = $this->GetX();
+            $y = $this->GetY();
+            
+            // Adiciona o texto com quebra de linha
+            $this->MultiCell($width, 7, utf8_decode($text), 1, 'L', false);
+            
+            // Calcula a altura total ocupada
+           // $height = $this->GetY() - $y;
+            
+            // Ajusta a posição X e Y para a próxima célula
+            //$this->SetXY($x + $width, $y + $height);
+            $maxHeight = max($maxHeight, $this->GetY() - $y);
+            $this->SetXY($x + $width, $y); // Redefinir posição X
+
+        }
+
 }
 
 // Criar o PDF
 $pdf = new PDF();
 $pdf->AliasNbPages();
 $pdf->AddPage('L');
-$pdf->SetFont('Arial', 'B', 8);
+$pdf->SetFont('Arial', 'B', 6);
 
 // Cabeçalhos da Tabela
-$pdf->Cell(0, 10, 'Listagem de Pacotes', 0, 1, 'C');
-$pdf->Ln(5);
+//$pdf->Cell(0, 10, 'Listagem de Pacotes', 0, 1, 'C');
+//$pdf->Ln(5);
 
-foreach ($colunas_selecionadas as $coluna) {
-    $pdf->Cell(26, 8, utf8_decode($available_columns[$coluna]), 1, 0, 'C');
-}
-$pdf->Ln();
-
+//foreach ($colunas_selecionadas as $coluna) {
+  //  $pdf->Cell(26, 8, utf8_decode($available_columns[$coluna]), 1, 0, 'C');
+//}
+//$pdf->Ln();
+// Cabeçalhos da Tabela e Total de Linhas
+$pdf->TableHeader(array_values($available_columns), count($pacotes));
 // Dados da Tabela
-$pdf->SetFont('Arial', '', 8);
+$pdf->SetFont('Arial', '', 6);
+
+// Definir largura da célula para a coluna descrição
+$descriptionWidth = 26; // Largura da célula para descrição
+
+
 foreach ($pacotes as $pacote) {
+    $maxHeight = 0;
+    $lineHeight = 7; // Altura padrão das células
+    $currentY = $pdf->GetY();
+    $pdf->SetX(10);
     foreach ($colunas_selecionadas as $coluna) {
         $value = !empty($pacote[$coluna]) ? $pacote[$coluna] : '';
         if (in_array($coluna, ['data_cadastro', 'data_envio', 'data_recebimento'])) {
             $value = !empty($value) ? date('d-m-Y H:i', strtotime($value)) : '';
         }
-        $pdf->Cell(26, 7, utf8_decode($value), 1);
+        if ($coluna == 'descricao') {
+            $pdf->MultiCellDescription($value, $descriptionWidth, $maxHeight);
+        }else{
+            $pdf->Cell(26, 7, utf8_decode($value), 1);
+        }
+
     }
-    $pdf->Ln();
+        // Ajustar altura da linha com base na célula de descrição
+    if ($maxHeight > 0) {
+        $pdf->SetXY($pdf->GetX(), $currentY);
+        foreach ($colunas_selecionadas as $coluna) {
+            if ($coluna != 'descricao') {
+                $pdf->Cell(26, $maxHeight, '', 1);
+            }
+        }
+        $pdf->Ln($maxHeight);
+    } else {
+        $pdf->Ln($lineHeight);
+    }
 }
+
 
 // Adicionar página de assinatura
 $pdf->SignaturePage();

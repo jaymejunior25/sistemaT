@@ -2,19 +2,7 @@
 session_start();
 include 'db.php';
 
-// Processar a seleção de unidade
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['unidade'])) {
-    $_SESSION['unidade_id'] = $_POST['unidade'];
-    
-    // Obter o nome da unidade selecionada
-    $unidade_id = $_SESSION['unidade_id'];
-    $query_nome = "SELECT nome FROM unidadehemopa WHERE id = :id";
-    $stmt_nome = $dbconn->prepare($query_nome);
-    $stmt_nome->execute([':id' => $unidade_id]);
-    $unidade_nome = $stmt_nome->fetchColumn();
-    $_SESSION['unidade_nome'] = $unidade_nome;
-    
-}
+
 
 // Verificar se o usuário está logado
 if (!isset($_SESSION['user_id'])) {
@@ -38,6 +26,19 @@ $localStmt = $dbconn->prepare($localQuery);
 $localStmt->execute([':usuario_id' => $user_id]);
 $locais_vinculados = $localStmt->fetchAll(PDO::FETCH_ASSOC);
 
+// Processar a seleção de unidade
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['unidade'])) {
+    $_SESSION['unidade_id'] = $_POST['unidade'];
+    
+    // Obter o nome da unidade selecionada
+    $unidade_id = $_SESSION['unidade_id'];
+    $query_nome = "SELECT nome FROM unidadehemopa WHERE id = :id";
+    $stmt_nome = $dbconn->prepare($query_nome);
+    $stmt_nome->execute([':id' => $unidade_id]);
+    $unidade_nome = $stmt_nome->fetchColumn();
+    $_SESSION['unidade_nome'] = $unidade_nome;
+    
+}
 // Definir a consulta SQL com base no tipo de usuário e local
 if ($user_type === 'admin') {
     $query = "SELECT p.*, l_envio.nome AS envio_nome, l_lab.nome AS lab_nome, u_envio.usuario AS enviado_por, u_recebimento.usuario AS recebido_por, u_cadastro.usuario AS cadastrado_por, l_cadastro.nome AS cadastro_nome 
@@ -127,6 +128,8 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <div class="container container-custom"  style="background-color: rgb(38, 168, 147);">
             <h1 class="text-center mb-4" style="color: #fff;">Bem-vindo ao Sistema de Gerenciamento de Envios e Recebimentos de Amostras: <?php echo ucfirst($user_name); ?></h1>
             <h2 class="text-center mb-4" style="color: #fff;">Seu usuário está vinculado à unidade: <?php echo ucfirst($local_name); ?></h2>
+            
+            <h2 class="text-center mb-4" style="color: #fff;">Você está logado como um Usuário Classe: <?php echo ucfirst($user_type); ?></h2>
             <form method="POST" action="index2.php">
                 <div class="form-group">
                     <label for="unidade">Selecione a Unidade:</label>
@@ -140,7 +143,6 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
                 <button type="submit" class="btn btn-primary">Salvar Unidade</button>
             </form>
-            <h2 class="text-center mb-4" style="color: #fff;">Você está logado como um Usuário Classe: <?php echo ucfirst($user_type); ?></h2>
         </div>
         <div class="container container-custom3">
         <h2 class="text-center mb-4"style="color: rgb(38, 168, 147);"><i class="fas fa-vial"></i> Amostras no Local</h2>

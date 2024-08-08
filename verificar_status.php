@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $doisultimos_digitos = 20; // ID do laboratório LABMASTER
             $codigobarras = substr($codigobarras, 1, -1); // Remove o primeiro e o último dígito
         } else {
-            if(strlen($codigobarras) == 15){
+            if(strlen($codigobarras) === 15){
                 $doisultimos_digitos = substr($codigobarras, -2);
             }else{
                 if ($digitoverificarp === '=' && ctype_digit($digitoverificaru)) {

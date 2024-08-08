@@ -107,6 +107,35 @@ if (!empty($searchType) && !empty($searchQuery)) {
     $queryParam = '%' . strtolower($searchQuery) . '%';
     switch ($searchType) {
         case 'codigobarras':
+            $codigobarras = $searchQuery;
+
+            // Separa o primeiro e o último dígito do código de barras
+            $digitoverificarp = substr($codigobarras, 0, 1);
+            $digitoverificaru = substr($codigobarras, -1);
+
+            if ($digitoverificarp == '=' && ctype_digit($digitoverificaru)) {
+                $codigobarras = substr($codigobarras, 1);
+                // Extrair os dois últimos dígitos do código de barras
+                $doisultimos_digitos = substr($codigobarras, -2);
+            } elseif(strlen($codigobarras) === 15){
+                $codigobarras = substr($codigobarras, 1);
+                // Extrair os dois últimos dígitos do código de barras
+                $doisultimos_digitos = substr($codigobarras, -2);
+            }else{
+                if ($digitoverificarp == 'B' || $digitoverificarp == 'b' && ctype_digit($digitoverificaru)) {
+                    $codigobarras = substr_replace($codigobarras, '0', -2, 1);
+                    // Extrair o penúltimo dígito do código de barras
+                    $penultimo_digito = substr($codigobarras, -2, 1);
+                } elseif(($digitoverificarp == 'A' || $digitoverificarp == 'a')&& ($digitoverificaru == 'B' || $digitoverificaru == 'b')) {
+                    $codigobarras = substr($codigobarras, 1, -1);
+                    $doisultimos_digitos = substr($codigobarras, -2);
+                }else {
+                    $codigobarras = substr($codigobarras, 1, -1);
+                    // Extrair o penúltimo dígito do código de barras
+                    $penultimo_digito = substr($codigobarras, -2, 1);
+                }
+            }
+            $queryParam = '%' . $codigobarras . '%';
             $conditions[] = "p.codigobarras LIKE :query";
             break;
         case 'usuario_cadastro':
@@ -302,12 +331,12 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
                 <div class="form-row mt-2">
                     <div class="col-md-4">
-                        <button type="submit" class="btn btn-primary">Aplicar Filtros</button>
-                        <a href="teste31.php" class="btn btn-secondary">Resetar Filtros</a>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i>Aplicar Filtros</button>
+                        <a href="lista_pacotes.php" class="btn btn-secondary"><i class="fas fa-eraser"></i>Resetar Filtros</a>
                     </div>
                     <div class="col-md-4">
-                        <button type="button" onclick="exportToExcel()" class="btn btn-success">Exportar para Excel</button>
-                        <a href="pdf_filtro.php?filter=<?= urlencode($filter) ?>&local_id=<?= urlencode($local_id) ?>&searchType=<?= urlencode($searchType) ?>&searchQuery=<?= urlencode($searchQuery) ?>&dateType=<?= urlencode($dateType) ?>&dateValue=<?= urlencode($dateValue) ?>&timeType=<?= urlencode($timeType) ?>&timeStart=<?= urlencode($timeStart) ?>&timeEnd=<?= urlencode($timeEnd) ?>&columns[]=<?= implode('&columns[]=', $colunas_selecionadas) ?>" class="btn btn-danger" target="_blank">Gerar PDF</a>
+                        <button type="button" onclick="exportToExcel()" class="btn btn-success"><i class="fas fa-file-csv"></i>Exportar para Excel</button>
+                        <a href="pdf_filtro.php?filter=<?= urlencode($filter) ?>&local_id=<?= urlencode($local_id) ?>&searchType=<?= urlencode($searchType) ?>&searchQuery=<?= urlencode($searchQuery) ?>&dateType=<?= urlencode($dateType) ?>&dateValue=<?= urlencode($dateValue) ?>&timeType=<?= urlencode($timeType) ?>&timeStart=<?= urlencode($timeStart) ?>&timeEnd=<?= urlencode($timeEnd) ?>&columns[]=<?= implode('&columns[]=', $colunas_selecionadas) ?>" class="btn btn-danger" target="_blank"><i class="far fa-file-pdf"></i>Gerar PDF</a>
                     </div>
                     <!--<div class="col-md-4">
                     <button onclick="location.href='index.php'" class="btn btn-secondary">Voltar</button>

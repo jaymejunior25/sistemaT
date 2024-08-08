@@ -42,25 +42,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $codigobarras = substr($codigobarras, 1);
                 $doisultimos_digitos = substr($codigobarras, -2);
                 
-            } elseif (($digitoverificarp === 'B' || $digitoverificarp === 'b') && ctype_digit($digitoverificaru)) {
-                $codigobarras = substr_replace($codigobarras, '0', -2, 1);
-                $penultimo_digito = substr($codigobarras, -2, 1);
-            } elseif (($digitoverificarp === 'A' || $digitoverificarp === 'a') && ($digitoverificaru === 'A' || $digitoverificaru === 'A')){
-                $codigobarras = substr($codigobarras, 1, -1);
-                $penultimo_digito = substr($codigobarras, -2, 1);
-            }
-            else {
-                if(strlen($codigobarras) === 9){
-                    $doisultimos_digitos = 20; // ID do laboratório LABMASTER
-                }else{
+            } elseif(strlen($codigobarras) === 15){
+                $doisultimos_digitos = substr($codigobarras, -2);
+            }else {
+                if (($digitoverificarp === 'B' || $digitoverificarp === 'b') && ctype_digit($digitoverificaru)) {
+                    $codigobarras = substr_replace($codigobarras, '0', -2, 1);
+                    $penultimo_digito = substr($codigobarras, -2, 1);
+                } elseif (($digitoverificarp === 'A' || $digitoverificarp === 'a') && ($digitoverificaru === 'A' || $digitoverificaru === 'A')){
+                    $codigobarras = substr($codigobarras, 1, -1);
                     $penultimo_digito = substr($codigobarras, -2, 1);
                 }
-                
+                else {
+                    if(strlen($codigobarras) === 9){
+                        $doisultimos_digitos = 20; // ID do laboratório LABMASTER
+                    }else{
+                        $penultimo_digito = substr($codigobarras, -2, 1);
+                    }
+                }
             }
 
         }
             // Verificar qual dígito usar: os dois últimos ou o penúltimo
-            $digito_a_utilizar = ($digitoverificarp === '=' && ctype_digit($digitoverificaru)) || (strlen($codigobarras) === 9) || (($digitoverificarp === 'A' || $digitoverificarp === 'a') && ($digitoverificaru === 'B' || $digitoverificaru === 'b')) ? $doisultimos_digitos : $penultimo_digito;
+            $digito_a_utilizar = ($digitoverificarp === '=' && ctype_digit($digitoverificaru)) || (strlen($codigobarras) === 15) || (strlen($codigobarras) === 9) || (($digitoverificarp === 'A' || $digitoverificarp === 'a') && ($digitoverificaru === 'B' || $digitoverificaru === 'b')) ? $doisultimos_digitos : $penultimo_digito;
             
             // Consultar o ID do laboratório correspondente ao dígito
             $stmt = $dbconn->prepare("SELECT * FROM laboratorio WHERE digito = :digito");

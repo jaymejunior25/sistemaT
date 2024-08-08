@@ -109,17 +109,23 @@ if (!empty($searchType) && !empty($searchQuery)) {
                 $codigobarras = substr($codigobarras, 1);
                 // Extrair os dois últimos dígitos do código de barras
                 $doisultimos_digitos = substr($codigobarras, -2);
-            } elseif ($digitoverificarp == 'B' || $digitoverificarp == 'b' && ctype_digit($digitoverificaru)) {
-                $codigobarras = substr_replace($codigobarras, '0', -2, 1);
-                // Extrair o penúltimo dígito do código de barras
-                $penultimo_digito = substr($codigobarras, -2, 1);
-            } elseif(($digitoverificarp == 'A' || $digitoverificarp == 'a')&& ($digitoverificaru == 'B' || $digitoverificaru == 'b')) {
-                $codigobarras = substr($codigobarras, 1, -1);
+            } elseif(strlen($codigobarras) === 15){
+                $codigobarras = substr($codigobarras, 1);
+                // Extrair os dois últimos dígitos do código de barras
                 $doisultimos_digitos = substr($codigobarras, -2);
-            }else {
-                $codigobarras = substr($codigobarras, 1, -1);
-                // Extrair o penúltimo dígito do código de barras
-                $penultimo_digito = substr($codigobarras, -2, 1);
+            }else{
+                if ($digitoverificarp == 'B' || $digitoverificarp == 'b' && ctype_digit($digitoverificaru)) {
+                    $codigobarras = substr_replace($codigobarras, '0', -2, 1);
+                    // Extrair o penúltimo dígito do código de barras
+                    $penultimo_digito = substr($codigobarras, -2, 1);
+                } elseif(($digitoverificarp == 'A' || $digitoverificarp == 'a')&& ($digitoverificaru == 'B' || $digitoverificaru == 'b')) {
+                    $codigobarras = substr($codigobarras, 1, -1);
+                    $doisultimos_digitos = substr($codigobarras, -2);
+                }else {
+                    $codigobarras = substr($codigobarras, 1, -1);
+                    // Extrair o penúltimo dígito do código de barras
+                    $penultimo_digito = substr($codigobarras, -2, 1);
+                }
             }
             $queryParam = '%' . $codigobarras . '%';
             $conditions[] = "p.codigobarras LIKE :query";
@@ -306,10 +312,14 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                     echo htmlspecialchars($pacote['lab_nome']);
                                                     break;
                                                 case 'data_cadastro':
-                                                    echo htmlspecialchars($pacote['data_cadastro']);
+                                                    $dateTime = new DateTime($pacote['data_cadastro']);
+                                                    echo $dateTime->format('d-m-Y H:i');
+                                                    //echo htmlspecialchars($pacote['data_cadastro']);
                                                     break;
                                                 case 'data_envio':
-                                                    echo htmlspecialchars($pacote['data_envio']);
+                                                    $dateTime = new DateTime($pacote['data_envio']);
+                                                    echo $dateTime->format('d-m-Y H:i');
+                                                    //echo htmlspecialchars($pacote['data_envio']);
                                                     break;
                                                
                                                 case 'envio_nome':
@@ -349,14 +359,14 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <div class="text-center mb-4">
                 <p><strong>Total de Amostras:</strong> <?php echo count($pacotes); ?></p>
             </div>
-            <form method="post" action="Relatorio de pendencias pdf.php" target="_blank">
+            <!--<form method="post" action="Relatorio de pendencias pdf.php" target="_blank">
                 <input type="hidden" name="data_inicio" value="<?php echo htmlspecialchars($data_inicio); ?>">
                 <?php foreach ($colunas_selecionadas as $coluna): ?>
                     <input type="hidden" name="colunas[]" value="<?php echo htmlspecialchars($coluna); ?>">
                 <?php endforeach; ?>
                 <button type="submit" class="btn btn-danger"><i class="far fa-file-pdf"></i> Baixar PDF</button>
-            </form>
-            
+            </form>-->
+            <a href="Relatorio de pendencias pdf.php?filter=<?= urlencode($filter) ?>&local_id=<?= urlencode($local_id) ?>&data_inicio=<?= urlencode($data_inicio) ?>&searchType=<?= urlencode($searchType) ?>&searchQuery=<?= urlencode($searchQuery) ?>&dateType=<?= urlencode($dateType) ?>&dateValue=<?= urlencode($dateValue) ?>&columns[]=<?= implode('&columns[]=', $colunas_selecionadas) ?>" class="btn btn-danger" target="_blank">Gerar PDF</a>
            
         <?php endif; ?>
         <div class="text-center mt-3">

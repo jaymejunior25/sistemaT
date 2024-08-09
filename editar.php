@@ -63,8 +63,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt = $dbconn->prepare("INSERT INTO usuario_local (usuario_id, local_id) VALUES (:usuario_id, :local_id)");
             $stmt->execute(['usuario_id' => $usuario_id, 'local_id' => $local_id]);
         }
-
+        // Definir a mensagem de sucesso e redirecionar para listar.php
         $_SESSION['success_message'] = 'Usuário atualizado com sucesso!';
+        header('Location: listar.php');
     } else {
         $_SESSION['error_message'] = 'Senha do usuário atual incorreta. Tente novamente.';
     }
@@ -172,22 +173,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
         document.getElementById('confirmarEdicao').addEventListener('click', function () {
-            document.getElementById('editarForm').submit();
-        });
-
-        document.getElementById('confirmarCadastro').addEventListener('click', function () {
             // Adiciona o campo de confirmação de senha ao formulário
             var senhaConfirmacao = document.getElementById('senha_confirmacao').value;
             var input = document.createElement('input');
             input.type = 'hidden';
             input.name = 'senha_confirmacao';
             input.value = senhaConfirmacao;
-            document.getElementById('cadastroForm').appendChild(input);
-
+            document.getElementById('editarForm').appendChild(input);
             // Submete o formulário
-            document.getElementById('cadastroForm').submit();
+            document.getElementById('editarForm').submit();
         });
-
         // Função para monitorar inatividade
         let inactivityTime = function () {
             let time;

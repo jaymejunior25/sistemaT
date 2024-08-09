@@ -366,7 +366,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <?php endforeach; ?>
                 <button type="submit" class="btn btn-danger"><i class="far fa-file-pdf"></i> Baixar PDF</button>
             </form>-->
-            <a href="Relatorio de pendencias pdf.php?filter=<?= urlencode($filter) ?>&local_id=<?= urlencode($local_id) ?>&data_inicio=<?= urlencode($data_inicio) ?>&searchType=<?= urlencode($searchType) ?>&searchQuery=<?= urlencode($searchQuery) ?>&dateType=<?= urlencode($dateType) ?>&dateValue=<?= urlencode($dateValue) ?>&columns[]=<?= implode('&columns[]=', $colunas_selecionadas) ?>" class="btn btn-danger" target="_blank">Gerar PDF</a>
+            <a href="Relatorio de pendencias pdf.php?filter=<?= urlencode($filter) ?>&local_id=<?= urlencode($local_id) ?>&data_inicio=<?= urlencode($data_inicio) ?>&searchType=<?= urlencode($searchType) ?>&searchQuery=<?= urlencode($searchQuery) ?>&dateType=<?= urlencode($dateType) ?>&dateValue=<?= urlencode($dateValue) ?>&columns[]=<?= implode('&columns[]=', $colunas_selecionadas) ?>" class="btn btn-danger" target="_blank"><i class="far fa-file-pdf"></i>Gerar PDF</a>
            
         <?php endif; ?>
         <div class="text-center mt-3">

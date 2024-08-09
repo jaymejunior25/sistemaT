@@ -73,17 +73,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if ($lab) {
                 $laboratorio_id = $lab['id'];
                 $ids_laboratorios[] = $laboratorio_id;
+                // Inserir o novo pacote no banco de dados
+                $stmt = $dbconn->prepare("INSERT INTO pacotes (descricao, codigobarras, usuario_cadastro_id, unidade_cadastro_id, data_cadastro, lab_id) VALUES (:descricao, :codigobarras, :usuario_cadastro_id, :unidade_cadastro_id, NOW(), :lab_id)");
+                $stmt->execute([
+                    ':descricao' => $descricao,
+                    ':codigobarras' => $codigobarras,
+                    ':usuario_cadastro_id' => $usuario_cadastro_id,
+                    ':unidade_cadastro_id' => $local_id,
+                    ':lab_id' => $laboratorio_id
+                ]);
+            }else{
+                $messages[] = 'Pacote com código de barras ' . $codigobarras . ' não é de nenhum laboratorio cadastrado no sistema.';
+                continue;
             }
 
-            // Inserir o novo pacote no banco de dados
-        $stmt = $dbconn->prepare("INSERT INTO pacotes (descricao, codigobarras, usuario_cadastro_id, unidade_cadastro_id, data_cadastro, lab_id) VALUES (:descricao, :codigobarras, :usuario_cadastro_id, :unidade_cadastro_id, NOW(), :lab_id)");
-        $stmt->execute([
-            ':descricao' => $descricao,
-            ':codigobarras' => $codigobarras,
-            ':usuario_cadastro_id' => $usuario_cadastro_id,
-            ':unidade_cadastro_id' => $local_id,
-            ':lab_id' => $laboratorio_id
-        ]);
+
 
 
     }

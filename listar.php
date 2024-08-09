@@ -51,11 +51,11 @@ $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <table class="table table-bordered table-hover table-striped">
                 <thead class="theadfixed">
                     <tr>
-                        <th>ID</th>
+                        <!-- <th>ID</th> -->
                         <th>Nome</th>
                         <th>Matricula</th>
                         <th>Usuario</th>
-                        <th>Unidade</th>
+                        <!-- <th>Unidade</th> -->
                         <th>Tipo Conta</th>
                         <th>Ações</th>
                     </tr>
@@ -63,11 +63,11 @@ $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <tbody>
                     <?php foreach ($usuarios as $usuario): ?>
                         <tr>
-                            <td><?php echo htmlspecialchars($usuario['id']); ?></td>
+                            <!-- <td><?php echo htmlspecialchars($usuario['id']); ?></td> -->
                             <td><?php echo htmlspecialchars($usuario['nome']); ?></td>
                             <td><?php echo htmlspecialchars($usuario['matricula']); ?></td>
                             <td><?php echo htmlspecialchars($usuario['usuario']); ?></td>
-                            <td><?php echo htmlspecialchars($usuario['unidade_nome']); ?></td>                                                     
+                            <!-- <td><?php echo htmlspecialchars($usuario['unidade_nome']); ?></td>                                                      -->
                             <td><?php echo htmlspecialchars($usuario['tipoconta']); ?></td>
                             <!-- <td><?php echo htmlspecialchars(ucfirst($usuario['role'])); ?></td> -->
                             <td>

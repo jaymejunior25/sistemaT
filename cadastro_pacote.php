@@ -108,6 +108,8 @@
                 .then(data => {
                     if (data.status === 'exists') {
                         alert('Pacote com código de barras ' + codigobarrasFiltrado + ' já existe no banco de dados.');
+                    } else if (data.status === 'lab_nexiste'){
+                        alert('Pacote com código de barras ' + codigobarrasFiltrado + ' não é de nenhum laboratorio cadastrado no sistema.');
                     } else {
                         pacotes.push({ descricao, codigobarras, codigobarrasFiltrado });
                         atualizarListaPacotes();

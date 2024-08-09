@@ -84,10 +84,10 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <?php endif; ?>
 
         <?php if ($_SESSION['user_type'] === 'admin'): ?>
-            <a style="color: #fff;" href="relatorio_pendencias.php"><i class="fas fa-file-invoice"></i> Relatorio de Pendencias</a>
-            <a style="color: #fff;" href="lista_pacotes.php"><i class="fas fa-vial"></i> Gerenciar Amostras</a>
+            <!-- <a style="color: #fff;" href="relatorio_pendencias.php"><i class="fas fa-file-invoice"></i> Relatorio de Pendencias</a> -->
+            <!-- <a style="color: #fff;" href="lista_pacotes.php"><i class="fas fa-vial"></i> Gerenciar Amostras</a> -->
             <a style="color: #fff;" href="cadastro_usuarios.php"><i class="fas fa-user-plus"></i> Cadastrar Usuário</a>
-            <a style="color: #fff;" href="listar.php"><i class="fas fa-users-cog"></i> Gerenciar Usuários</a>
+             <a style="color: #fff;" href="listar.php"><i class="fas fa-users-cog"></i> Gerenciar Usuários</a>
             <a style="color: #fff;" href="cadastrounidade.php"><i class="fas fa-map-marker-alt"></i> Cadastrar Locais</a>
             <a style="color: #fff;" href="gerenciar_locais.php"><i class="fas fa-list"></i> Gerenciar Locais</a>
             <a style="color: #fff;" href="cadastro_lab.php"><i class="fas fa-flask"></i> Cadastrar Laboratório</a>

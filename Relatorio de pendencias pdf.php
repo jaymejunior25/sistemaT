@@ -204,7 +204,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Adicionar o cabeçalho da tabela
     $pdf->SetFont('Arial', 'B', 10);
-    $pdf->Cell(0, 10, 'Relatório de Pendências', 0, 1, 'C');
+    $pdf->Cell(0, 10, utf8_decode('Relatório de Pendências'), 0, 1, 'C');
     $pdf->Ln(5);
     $pdf->SetFont('Arial', 'B', 8);
     $pdf->Cell(0, 10, 'Total de Linhas: ' . count($pacotes), 0, 1, 'L');
@@ -222,7 +222,9 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $row = [];
         foreach ($colunas_selecionadas as $column) {
             if (in_array($column, ['data_cadastro', 'data_envio'])) {
-                $row[] = date('d-m-Y H:i', strtotime($pacote[$column]));
+                $dateTime = new DateTime($pacote[$column]);
+                $row[] = $dateTime->format('d-m-Y H:i');
+                //$row[] = date('d-m-Y H:i', strtotime($pacote[$column]));
             } else {
                 $row[] = $pacote[$column];
             }

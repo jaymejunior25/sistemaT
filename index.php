@@ -135,6 +135,8 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         <span class="badge badge-warning">enviado</span>
                                     <?php elseif($pacote['status'] == 'recebido'): ?>
                                         <span class="badge badge-success">recebido</span>
+                                    <?php elseif($pacote['status'] == 'recebidolab'): ?>
+                                        <span  class="badge badge-primary">recebido LAB</span>
                                     <?php endif; ?>
                                 </td>
                                 <td><?php echo htmlspecialchars($pacote['descricao']); ?></td>

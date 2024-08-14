@@ -33,6 +33,17 @@ $stmt = $dbconn->prepare("SELECT id, nome FROM unidadehemopa");
 $stmt->execute();
 $locais = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+
+$stmt = $dbconn->prepare("SELECT laboratorio_id FROM usuario_laboratorio WHERE usuario_id = :usuario_id");
+$stmt->execute(['usuario_id' => $usuario_id]);
+$laboratorio_vinculado = $stmt->fetch(PDO::FETCH_COLUMN);
+
+// Obter a lista de laboratórios únicos para exibir no formulário
+$stmt = $dbconn->prepare("SELECT DISTINCT nome FROM laboratorio");
+$stmt->execute();
+$laboratorios = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $senha_confirmacao = $_POST['senha_confirmacao'];
     $user_id = $_SESSION['user_id'];
@@ -49,6 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $usuario = $_POST['usuario'];
         $tipo = $_POST['tipoconta'];
         $locais_selecionados = $_POST['unidades_hemopa'];
+        $laboratorio_selecionado = $_POST['laboratorio'];
 
         // Atualizar o usuário no banco de dados
         $stmt = $dbconn->prepare("UPDATE usuarios SET nome = :nome, matricula = :matricula, tipoconta = :tipoconta, usuario = :usuario WHERE id = :usuario_id");
@@ -58,6 +70,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt = $dbconn->prepare("DELETE FROM usuario_local WHERE usuario_id = :usuario_id");
         $stmt->execute(['usuario_id' => $usuario_id]);
 
+        // Remover o laboratório existente
+        $stmt = $dbconn->prepare("DELETE FROM usuario_laboratorio WHERE usuario_id = :usuario_id");
+        $stmt->execute(['usuario_id' => $usuario_id]);
+        // Buscar o ID do laboratório selecionado pelo nome
+        $stmt = $dbconn->prepare("SELECT id FROM laboratorio WHERE nome = :nome LIMIT 1");
+        $stmt->execute(['nome' => $laboratorio_selecionado]);
+        $laboratorio_id = $stmt->fetchColumn();
+
+        // Inserir o novo laboratório vinculado
+        if ($laboratorio_id) {
+            $stmt = $dbconn->prepare("INSERT INTO usuario_laboratorio (usuario_id, laboratorio_id) VALUES (:usuario_id, :laboratorio_id)");
+            $stmt->execute(['usuario_id' => $usuario_id, 'laboratorio_id' => $laboratorio_id]);
+        }
         // Inserir novos locais
         foreach ($locais_selecionados as $local_id) {
             $stmt = $dbconn->prepare("INSERT INTO usuario_local (usuario_id, local_id) VALUES (:usuario_id, :local_id)");
@@ -127,6 +152,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <?php endforeach; ?>
                 </div>
             </div>
+            <div class="form-group">
+                <label for="laboratorio" style="color: #28a745;">Laboratório:</label>
+                <select name="laboratorio" id="laboratorio" class="form-control" required>
+                    <?php foreach ($laboratorios as $laboratorio): ?>
+                        <option value="<?php echo $laboratorio['nome']; ?>" <?php echo ($laboratorio_vinculado == $laboratorio['nome']) ? 'selected' : ''; ?>>
+                            <?php echo $laboratorio['nome']; ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
             <button type="button" class="btn btn-custom btn-block" data-toggle="modal" data-target="#confirmPasswordModal">
                 <i class="fas fa-save"></i> Salvar
             </button>

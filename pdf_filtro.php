@@ -31,15 +31,17 @@ $available_columns = [
 ];
 
 // Construir a consulta SQL com base nos filtros
-$sql = "SELECT p.id, p.status, p.codigobarras, p.descricao, p.data_envio, p.data_recebimento, p.data_cadastro, l_lab.nome AS lab_nome, l_envio.nome AS envio_nome, u_envio.usuario AS enviado_por, u_recebimento.usuario AS recebido_por,
-        u_cadastro.usuario AS cadastrado_por, l_cadastro.nome AS cadastro_nome 
+$sql = 'SELECT p.id, p.status, p.codigobarras, p.descricao, p.data_envio, p.data_recebimento, p.data_cadastro, p.data_recebimentolab, l_lab.nome AS lab_nome, l_envio.nome AS envio_nome, u_envio.usuario AS enviado_por, u_recebimento.usuario AS recebido_por,
+        u_cadastro.usuario AS cadastrado_por, l_cadastro.nome AS cadastro_nome, u_recebimentoLab.usuario AS recebidolab_por
         FROM pacotes p 
         LEFT JOIN unidadehemopa l_envio ON p.unidade_envio_id = l_envio.id 
         LEFT JOIN unidadehemopa l_cadastro ON p.unidade_cadastro_id = l_cadastro.id 
         LEFT JOIN usuarios u_cadastro ON p.usuario_cadastro_id = u_cadastro.id 
         LEFT JOIN usuarios u_envio ON p.usuario_envio_id = u_envio.id 
         LEFT JOIN usuarios u_recebimento ON p.usuario_recebimento_id = u_recebimento.id
-        LEFT JOIN laboratorio l_lab ON p.lab_id = l_lab.id";
+        LEFT JOIN usuarios u_recebimentoLab ON p.usuario_recebimentolab_id = u_recebimentoLab.id
+        LEFT JOIN laboratorio l_lab ON p.lab_id = l_lab.id';
+
 
 $conditions = [];
 $params = [];
@@ -50,6 +52,8 @@ if ($filter == 'enviados') {
     $conditions[] = "p.status = 'recebido'";
 } elseif ($filter == 'cadastrado') {
     $conditions[] = "p.status = 'cadastrado'";
+}elseif ($filter == 'recebidolab') {
+    $conditions[] = "p.status = 'recebidolab'";
 }
 
 if (!empty($local_id)) {
@@ -101,12 +105,15 @@ if (!empty($searchType) && !empty($searchQuery)) {
         case 'usuario_recebimento':
             $conditions[] = "LOWER(u_recebimento.usuario) LIKE :query";
             break;
+        case 'usuario_recebimentoLab':
+            $conditions[] = "LOWER(u_recebimentoLab.usuario) LIKE :query";
+            break;
         case 'unidade_envio':
             $conditions[] = "LOWER(l_envio.nome) LIKE :query";
             break;
         case 'lab_nome':
             $conditions[] = "LOWER(l_lab.nome) LIKE :query";
-            break;
+            break;  
         default:
             break;
     }
@@ -123,6 +130,9 @@ if (!empty($dateType) && !empty($dateValue)) {
             break;
         case 'dataRecebimento':
             $conditions[] = "DATE(p.data_recebimento) = :dateValue";
+            break;
+        case 'dataRecebimentoLab':
+            $conditions[] = "DATE(p.data_recebimentolab) = :dateValue";
             break;
         default:
             break;
@@ -149,12 +159,11 @@ if (count($conditions) > 0) {
     $sql .= " WHERE " . implode(" AND ", $conditions);
 }
 
-$sql .= " ORDER BY p.data_cadastro DESC";
+$sql .= " ORDER BY p.data_cadastro DESC";  // Ordenar por data de cadastro decrescente
 
 $stmt = $dbconn->prepare($sql);
 $stmt->execute($params);
 $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
 
 class PDF extends FPDF
 {
@@ -254,8 +263,10 @@ $pdf->SetFont('Arial', '', 6);
 foreach ($pacotes as $pacote) {
     foreach ($colunas_selecionadas as $coluna) {
         $value = !empty($pacote[$coluna]) ? $pacote[$coluna] : '';
-        if (in_array($coluna, ['data_cadastro', 'data_envio', 'data_recebimento'])) {
-            $value = !empty($value) ? date('d-m-Y H:i', strtotime($value)) : '';
+        if (in_array($coluna, ['data_cadastro', 'data_envio', 'data_recebimento', 'data_recebimentolab'])) {
+            $dateTime = new DateTime($value);
+            $value = $dateTime->format('d-m-Y H:i');
+            //$value = !empty($value) ? date('d-m-Y H:i', strtotime($value)) : '';
         }
         $pdf->Cell(26, 7, utf8_decode($value), 1);
     }

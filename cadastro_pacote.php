@@ -13,10 +13,14 @@
     <div class="container container-customlistas">
         <h1 class="text-center mb-4" style="color: #28a745;">Cadastrar Amostra</h1>
         <form id="pacoteForm">
-            <div class="form-group">
-                <label for="descricao" style="color: #28a745;">Descrição:</label>
-                <input type="text" name="descricao" id="descricao" class="form-control" required>
-            </div>
+        <div class="form-group">
+            <label for="descricao" style="color: #28a745;">Descrição:</label>
+            <select name="descricao" id="descricao" class="form-control" required>
+                <option value="1° ENVIO">1° ENVIO</option>
+                <option value="2° ENVIO">2° ENVIO</option>
+                <option value="3° ENVIO">3° ENVIO</option>
+            </select>
+        </div>
             <div class="form-group">
                 <label for="codigobarras" style="color: #28a745;">Código de Barras:</label>
                 <input type="text" name="codigobarras" id="codigobarras" class="form-control" required>
@@ -89,7 +93,7 @@
                 const codigobarrasFiltrado = filtrarCodigoBarras(codigobarras);
 
                 // Verificação de duplicidade na lista dinâmica
-                let duplicado = pacotes.some(pacote => pacote.codigobarras === codigobarrasFiltrado);
+                let duplicado = pacotes.some(pacote => pacote.codigobarrasFiltrado === codigobarrasFiltrado);
 
                 if (duplicado) {
                     alert('Pacote com código de barras ' + codigobarrasFiltrado + ' já existe na lista.');

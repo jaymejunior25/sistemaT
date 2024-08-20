@@ -312,13 +312,17 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                     echo htmlspecialchars($pacote['lab_nome']);
                                                     break;
                                                 case 'data_cadastro':
+                                                   // echo !empty($pacote['data_cadastro']) ? date('d-m-Y H:i', strtotime($pacote['data_cadastro'])) : '';
+
                                                     $dateTime = new DateTime($pacote['data_cadastro']);
                                                     echo $dateTime->format('d-m-Y H:i');
                                                     //echo htmlspecialchars($pacote['data_cadastro']);
                                                     break;
                                                 case 'data_envio':
-                                                    $dateTime = new DateTime($pacote['data_envio']);
-                                                    echo $dateTime->format('d-m-Y H:i');
+                                                    echo !empty($pacote['data_envio']) ? date('d-m-Y H:i', strtotime($pacote['data_envio'])) : '';
+
+                                                    // $dateTime = new DateTime($pacote['data_envio']);
+                                                    // echo $dateTime->format('d-m-Y H:i');
                                                     //echo htmlspecialchars($pacote['data_envio']);
                                                     break;
                                                

@@ -81,6 +81,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <a style="color: #fff;" href="recebimento_LABMASTER.php"><i class="fas fa-vials"></i> Receber Amostras LABMASTER</a>
             <a style="color: #fff;" href="relatorio_pendencias.php"><i class="fas fa-file-invoice"></i> Relatorio de Pendencias</a>
             <a style="color: #fff;" href="lista_pacotes.php"><i class="fas fa-vial"></i> Gerenciar Amostras</a>
+            <a style="color: #fff;" href="recebimento_lab.php"><i class="fas fa-flask"></i> Recebimento por Laboratório</a>
         <?php endif; ?>
 
         <?php if ($_SESSION['user_type'] === 'admin'): ?>

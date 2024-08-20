@@ -36,14 +36,11 @@ $available_columns = [
     'lab_nome' => 'Laboratorio',
     'data_cadastro' => 'Data de Cadastro',
     'data_envio' => 'Data de Envio',
-    'data_recebimento' => 'Dt de Recebimento',
-    'data_recebimentolab' => 'Dt de Receb. LAB',
+    'data_recebimento' => 'Data de Recebimento',
     'envio_nome' => 'Local de Envio',
     'cadastrado_por' => 'Cadastrado por',
     'enviado_por' => 'Enviado por',
-    'recebido_por' => 'Recebido por',
-    'recebidolab_por' => 'Recebido LAB por'
-    
+    'recebido_por' => 'Recebido por'
 ];
 
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
@@ -75,23 +72,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
     if (isset($_GET['columns'])) {
         $colunas_selecionadas = $_GET['columns'];
     } else {
-        $colunas_selecionadas = array_diff(array_keys($available_columns), ['data_cadastro', 'cadastrado_por']);// as colunas selecionadas por padrão
-
-        //$colunas_selecionadas = array_keys($available_columns); // Todas as colunas selecionadas por padrão
+        $colunas_selecionadas = array_keys($available_columns); // Todas as colunas selecionadas por padrão
     }
 }
 
 // Construir a consulta SQL com base nos filtros
-$sql = 'SELECT p.id, p.status, p.codigobarras, p.descricao, p.data_envio, p.data_recebimento, p.data_cadastro, p.data_recebimentolab, l_lab.nome AS lab_nome, l_envio.nome AS envio_nome, u_envio.usuario AS enviado_por, u_recebimento.usuario AS recebido_por,
-        u_cadastro.usuario AS cadastrado_por, l_cadastro.nome AS cadastro_nome, u_recebimentoLab.usuario AS recebidolab_por
+$sql = "SELECT p.id, p.status, p.codigobarras, p.descricao, p.data_envio, p.data_recebimento, p.data_cadastro, l_lab.nome AS lab_nome, l_envio.nome AS envio_nome, u_envio.usuario AS enviado_por, u_recebimento.usuario AS recebido_por,
+        u_cadastro.usuario AS cadastrado_por, l_cadastro.nome AS cadastro_nome 
         FROM pacotes p 
         LEFT JOIN unidadehemopa l_envio ON p.unidade_envio_id = l_envio.id 
         LEFT JOIN unidadehemopa l_cadastro ON p.unidade_cadastro_id = l_cadastro.id 
         LEFT JOIN usuarios u_cadastro ON p.usuario_cadastro_id = u_cadastro.id 
         LEFT JOIN usuarios u_envio ON p.usuario_envio_id = u_envio.id 
         LEFT JOIN usuarios u_recebimento ON p.usuario_recebimento_id = u_recebimento.id
-        LEFT JOIN usuarios u_recebimentoLab ON p.usuario_recebimentolab_id = u_recebimentoLab.id
-        LEFT JOIN laboratorio l_lab ON p.lab_id = l_lab.id';
+        LEFT JOIN laboratorio l_lab ON p.lab_id = l_lab.id";
 
 $conditions = [];
 $params = [];
@@ -155,9 +149,6 @@ if (!empty($searchType) && !empty($searchQuery)) {
         case 'usuario_recebimento':
             $conditions[] = "LOWER(u_recebimento.usuario) LIKE :query";
             break;
-        case 'usuario_recebimentoLab':
-            $conditions[] = "LOWER(u_recebimentoLab.usuario) LIKE :query";
-            break;
         case 'unidade_envio':
             $conditions[] = "LOWER(l_envio.nome) LIKE :query";
             break;
@@ -180,9 +171,6 @@ if (!empty($dateType) && !empty($dateValue)) {
             break;
         case 'dataRecebimento':
             $conditions[] = "DATE(p.data_recebimento) = :dateValue";
-            break;
-        case 'dataRecebimentoLab':
-            $conditions[] = "DATE(p.data_recebimentolab) = :dateValue";
             break;
         default:
             break;
@@ -214,7 +202,6 @@ $sql .= " ORDER BY p.data_cadastro DESC";  // Ordenar por data de cadastro decre
 $stmt = $dbconn->prepare($sql);
 $stmt->execute($params);
 $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -297,7 +284,6 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <option value="usuario_cadastro" <?php if ($searchType == 'usuario_cadastro') echo 'selected'; ?>>Cadastrado por</option>
                             <option value="usuario_envio" <?php if ($searchType == 'usuario_envio') echo 'selected'; ?>>Enviado por</option>
                             <option value="usuario_recebimento" <?php if ($searchType == 'usuario_recebimento') echo 'selected'; ?>>Recebido por</option>
-                            <option value="usuario_recebimentoLab" <?php if ($searchType == 'usuario_recebimentoLab') echo 'selected'; ?>>Recebido LAB por</option>
                             <option value="unidade_envio" <?php if ($searchType == 'unidade_envio') echo 'selected'; ?>>Unidade de Envio</option>
                             <option value="lab_nome" <?php if ($searchType == 'lab_nome') echo 'selected'; ?>>Laboratório</option>
                         </select>
@@ -313,7 +299,6 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <option value="dataCadastro" <?php if ($dateType == 'dataCadastro') echo 'selected'; ?>>Data de Cadastro</option>
                             <option value="dataEnvio" <?php if ($dateType == 'dataEnvio') echo 'selected'; ?>>Data de Envio</option>
                             <option value="dataRecebimento" <?php if ($dateType == 'dataRecebimento') echo 'selected'; ?>>Data de Recebimento</option>
-                            <option value="dataRecebimentoLab" <?php if ($dateType == 'dataRecebimentoLab') echo 'selected'; ?>>Data de Recebimento LAB</option>
                         </select>
                     </div>
                     <div class="col-md-2">
@@ -351,7 +336,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <div class="form-row mt-2">
                     <div class="col-md-4">
                         <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i>Aplicar Filtros</button>
-                        <a href="teste38.php" class="btn btn-secondary"><i class="fas fa-eraser"></i>Resetar Filtros</a>
+                        <a href="lista_pacotes.php" class="btn btn-secondary"><i class="fas fa-eraser"></i>Resetar Filtros</a>
                     </div>
                     <div class="col-md-4">
                         <button type="button" onclick="exportToExcel()" class="btn btn-success"><i class="fas fa-file-csv"></i>Exportar para Excel</button>
@@ -389,7 +374,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     
                                     <?php
                                     
-                                    if ($coluna == 'data_cadastro' || $coluna == 'data_envio' || $coluna == 'data_recebimento' || $coluna == 'data_recebimentolab') {
+                                    if ($coluna == 'data_cadastro' || $coluna == 'data_envio' || $coluna == 'data_recebimento') {
                                         $data = $pacote[$coluna];
                                         if ($data) {
                                             $dateTime = new DateTime($data);

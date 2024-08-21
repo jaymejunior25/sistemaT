@@ -11,6 +11,12 @@ $local_envio_id = $_SESSION['unidade_id'];
 $status_cadastro = 'cadastrado';
 $pacotes = [];
 
+$filter_date = isset($_GET['filter_date']) ? $_GET['filter_date'] : null;
+$filter_description = isset($_GET['filter_description']) ? $_GET['filter_description'] : null;
+
+
+
+
 // Processar o envio dos pacotes
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_password']) && isset($_POST['pacotes'])) {
     $pacotes_selecionados = $_POST['pacotes'];
@@ -31,15 +37,35 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_password']) &&
     }
 }
 
-// Obter a lista de pacotes cadastrados para o local do usuário
-$stmt = $dbconn->prepare("SELECT p.id, p.status, p.codigobarras, p.descricao,  p.data_cadastro, l_lab.nome AS lab_nome,
-                        u_cadastro.usuario AS cadastrado_por, l_cadastro.nome AS cadastro_nome  
-                        FROM pacotes p 
-                        LEFT JOIN usuarios u_cadastro ON p.usuario_cadastro_id = u_cadastro.id 
-                        LEFT JOIN unidadehemopa l_cadastro ON p.unidade_cadastro_id = l_cadastro.id 
-                        LEFT JOIN laboratorio l_lab ON p.lab_id = l_lab.id
-                        WHERE unidade_cadastro_id = :unidade_cadastro_id AND status = :status_cadastro ");
-$stmt->execute(['unidade_cadastro_id' => $local_envio_id, 'status_cadastro' => $status_cadastro]);
+// Construir a consulta SQL com os filtros
+$sql = "SELECT p.id, p.status, p.codigobarras, p.descricao, p.data_cadastro, l_lab.nome AS lab_nome,
+        u_cadastro.usuario AS cadastrado_por, l_cadastro.nome AS cadastro_nome  
+        FROM pacotes p 
+        LEFT JOIN usuarios u_cadastro ON p.usuario_cadastro_id = u_cadastro.id 
+        LEFT JOIN unidadehemopa l_cadastro ON p.unidade_cadastro_id = l_cadastro.id 
+        LEFT JOIN laboratorio l_lab ON p.lab_id = l_lab.id
+        WHERE unidade_cadastro_id = :unidade_cadastro_id AND status = :status_cadastro";
+
+// Adicionar os filtros à consulta SQL
+$params = [
+    ':unidade_cadastro_id' => $local_envio_id,
+    ':status_cadastro' => $status_cadastro,
+];
+
+if ($filter_date) {
+    $sql .= " AND DATE(p.data_cadastro) = :filter_date";
+    $params[':filter_date'] = $filter_date;
+}
+
+if ($filter_description) {
+    $sql .= " AND p.descricao LIKE :filter_description";
+    $params[':filter_description'] = '%' . $filter_description . '%';
+}
+
+$sql .= " ORDER BY p.data_cadastro DESC";
+
+$stmt = $dbconn->prepare($sql);
+$stmt->execute($params);
 $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Calcular o total de pacotes
@@ -69,6 +95,29 @@ $totalPacotes = count($pacotes);
                 <?php echo $_SESSION['error_message']; unset($_SESSION['error_message']); ?>
             </div>
         <?php endif; ?>
+        <form method="GET" action="">
+            <div class="form-row">
+                <div class="col-md-4 mb-3">
+                    <label for="filter_date">Filtrar por Data de Cadastro:</label>
+                    <input type="date" class="form-control" id="filter_date" name="filter_date" value="<?php echo isset($_GET['filter_date']) ? htmlspecialchars($_GET['filter_date']) : ''; ?>">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="filter_description">Filtrar por Descrição:</label>
+                    <div class="form-group">
+                        <label for="descricao" style="color: #28a745;">Descrição:</label>
+                        <select name="filter_description" id="filter_description" class="form-control" required>
+                            <option value="1° ENVIO">1° ENVIO</option>
+                            <option value="2° ENVIO">2° ENVIO</option>
+                            <option value="3° ENVIO">3° ENVIO</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3 align-self-end">
+                    <button type="submit" class="btn btn-primary">Filtrar</button>
+                </div>
+            </div>
+        </form>
+
         <div class="mb-3 text-center">
             <h4>Total de Amostras: <?php echo $totalPacotes; ?></h4> <!-- Total de Pacotes -->
         </div>

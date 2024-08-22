@@ -62,9 +62,12 @@
             let digitoverificaru = codigoBarras.charAt(codigoBarras.length - 1);
 
             if (digitoverificarp === '=' && !isNaN(digitoverificaru)) {
-                return codigoBarras.slice(1);
+                codigoBarras=codigoBarras.slice(1);
+                return ('B'+codigoBarras.slice(1));
             }else if(codigoBarras.length == 15) {
-                return codigoBarras;
+
+                return ('B'+codigoBarras.slice(1));
+
             }
             else{ 
                 if ((digitoverificarp === 'B' || digitoverificarp === 'b') && !isNaN(digitoverificaru)) {
@@ -178,7 +181,7 @@
                 const item = document.createElement('div');
                 item.className = 'alert alert-secondary d-flex justify-content-between align-items-center';
                 item.innerHTML = `
-                    <span>Laboratório: ${pacote.laboratorio}, Código de Barras: ${pacote.codigobarras}</span>
+                    <span>Laboratório: ${pacote.laboratorio}, Código de Barras: ${pacote.codigobarrasFiltrado}</span>
                     <button class="btn btn-danger btn-sm" onclick="removerPacote(${i})">Excluir</button>
                 `;
                 lista.appendChild(item);

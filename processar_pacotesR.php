@@ -21,9 +21,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         if ($digitoverificarp === '=' && ctype_digit($digitoverificaru)) {
             $codigobarras = substr($codigobarras, 1);
+            $codigobarras = substr_replace($codigobarras, 'B', 0, 1);
             $doisultimos_digitos = substr($codigobarras, -2);
             
         } elseif(strlen($codigobarras) === 15){
+            $codigobarras = substr_replace($codigobarras, 'B', 0, 1);
             $doisultimos_digitos = substr($codigobarras, -2);
         }else {
             if (($digitoverificarp === 'B' || $digitoverificarp === 'b') && ctype_digit($digitoverificaru)) {

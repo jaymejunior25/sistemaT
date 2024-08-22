@@ -11,11 +11,8 @@ $local_envio_id = $_SESSION['unidade_id'];
 $status_cadastro = 'cadastrado';
 $pacotes = [];
 
-$filter_date = isset($_GET['filter_date']) ? $_GET['filter_date'] : null;
+$filter_date = isset($_GET['filter_date']) ? $_GET['filter_date'] : date('Y-m-d');
 $filter_description = isset($_GET['filter_description']) ? $_GET['filter_description'] : null;
-
-
-
 
 // Processar o envio dos pacotes
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_password']) && isset($_POST['pacotes'])) {
@@ -25,12 +22,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_password']) &&
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (password_verify($_POST['confirm_password'], $user['senha'])) {
-        $stmt = $dbconn->prepare("UPDATE pacotes SET status = 'enviado', data_envio = NOW(), unidade_envio_id = :unidade_envio_id, usuario_envio_id = :usuario_envio_id WHERE unidade_cadastro_id = :unidade_cadastro_id AND status = 'cadastrado'");
-        $stmt->execute([
+        // Atualiza apenas os pacotes que foram filtrados e mostrados na tela
+        $sql = "UPDATE pacotes SET status = 'enviado', data_envio = NOW(), unidade_envio_id = :unidade_envio_id, usuario_envio_id = :usuario_envio_id
+                WHERE unidade_cadastro_id = :unidade_cadastro_id AND status = :status_cadastro";
+
+        // Adicionar filtros ao update, se existirem
+        $params = [
             ':unidade_envio_id' => $_SESSION['unidade_id'],
             ':usuario_envio_id' => $_SESSION['user_id'],
-            ':unidade_cadastro_id' => $local_envio_id
-        ]);
+            ':unidade_cadastro_id' => $local_envio_id,
+            ':status_cadastro' => $status_cadastro,
+        ];
+
+        if ($filter_date) {
+            $sql .= " AND DATE(data_cadastro) = :filter_date";
+            $params[':filter_date'] = $filter_date;
+        }
+
+        if ($filter_description) {
+            $sql .= " AND descricao LIKE :filter_description";
+            $params[':filter_description'] = '%' . $filter_description . '%';
+        }
+
+        $stmt = $dbconn->prepare($sql);
+        $stmt->execute($params);
+
         $_SESSION['success_message'] = 'Pacotes enviados com sucesso.';
     } else {
         $_SESSION['error_message'] = 'Senha incorreta. Por favor, tente novamente.';
@@ -71,6 +87,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 // Calcular o total de pacotes
 $totalPacotes = count($pacotes);
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -97,24 +114,27 @@ $totalPacotes = count($pacotes);
         <?php endif; ?>
         <form method="GET" action="">
             <div class="form-row">
-                <div class="col-md-4 mb-3">
-                    <label for="filter_date">Filtrar por Data de Cadastro:</label>
-                    <input type="date" class="form-control" id="filter_date" name="filter_date" value="<?php echo isset($_GET['filter_date']) ? htmlspecialchars($_GET['filter_date']) : ''; ?>">
-                </div>
+            <div class="col-md-4 mb-3">
+                <label for="filter_date">Filtrar por Data de Cadastro:</label>
+                <input type="date" class="form-control" id="filter_date" name="filter_date" 
+                    value="<?php echo isset($_GET['filter_date']) ? htmlspecialchars($_GET['filter_date']) : date('Y-m-d'); ?>">
+            </div>
                 <div class="col-md-4 mb-3">
                     <label for="filter_description">Filtrar por Descrição:</label>
                     <div class="form-group">
-                        <label for="descricao" style="color: #28a745;">Descrição:</label>
+                        
                         <select name="filter_description" id="filter_description" class="form-control" required>
                             <option value="1° ENVIO">1° ENVIO</option>
                             <option value="2° ENVIO">2° ENVIO</option>
                             <option value="3° ENVIO">3° ENVIO</option>
                         </select>
                     </div>
+                    <!-- <button type="submit" class="btn btn-primary">Filtrar</button> -->
                 </div>
-                <div class="col-md-4 mb-3 align-self-end">
+                <div class="col-md-4 mb-3 align-self-center">
+                    <br>
                     <button type="submit" class="btn btn-primary">Filtrar</button>
-                </div>
+                </div> 
             </div>
         </form>
 

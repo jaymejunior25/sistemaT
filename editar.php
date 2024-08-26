@@ -87,6 +87,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         foreach ($locais_selecionados as $local_id) {
             $stmt = $dbconn->prepare("INSERT INTO usuario_local (usuario_id, local_id) VALUES (:usuario_id, :local_id)");
             $stmt->execute(['usuario_id' => $usuario_id, 'local_id' => $local_id]);
+            if ($local_id == 1){
+                $stmt = $dbconn->prepare("UPDATE usuarios SET unidade_id = :unidade WHERE id = :usuario_id");
+                $stmt->execute(['unidade' => $local_id, 'usuario_id' => $usuario_id]);
+
+            }
         }
         // Definir a mensagem de sucesso e redirecionar para listar.php
         $_SESSION['success_message'] = 'Usuário atualizado com sucesso!';
@@ -155,6 +160,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <div class="form-group">
                 <label for="laboratorio" style="color: #28a745;">Laboratório:</label>
                 <select name="laboratorio" id="laboratorio" class="form-control" required>
+                    <option value="">Sem laboratório</option> <!-- Adiciona a opção "Nenhum" -->
                     <?php foreach ($laboratorios as $laboratorio): ?>
                         <option value="<?php echo $laboratorio['nome']; ?>" <?php echo ($laboratorio_vinculado == $laboratorio['nome']) ? 'selected' : ''; ?>>
                             <?php echo $laboratorio['nome']; ?>

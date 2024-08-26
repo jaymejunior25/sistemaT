@@ -198,6 +198,9 @@ if (!empty($timeType) && !empty($timeStart)) {
         case 'horaRecebimento':
             $conditions[] = "TO_CHAR(p.data_recebimento, 'HH24:MI') BETWEEN :timeStart AND :timeEnd";
             break;
+        case 'horaRecebimentolab':
+            $conditions[] = "TO_CHAR(p.data_recebimentolab, 'HH24:MI') BETWEEN :timeStart AND :timeEnd";
+            break;
         default:
             break;
     }
@@ -321,11 +324,12 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <input type="date" name="dateValue" id="dateValue" value="<?php echo htmlspecialchars($dateValue); ?>" class="form-control">
                     </div>
                     <div class="col-md-2">
-                        <label for="timeType">Filtrar por Hora:</label>
+                        <label for="timeType">Filtrar por Hora:</label> 
                         <select name="timeType" id="timeType" class="form-control">
                             <option value="">Nenhum</option>
                             <option value="horaEnvio" <?php if ($timeType == 'horaEnvio') echo 'selected'; ?>>Hora de Envio</option>
                             <option value="horaRecebimento" <?php if ($timeType == 'horaRecebimento') echo 'selected'; ?>>Hora de Recebimento</option>
+                            <option value="horaRecebimentolab" <?php if ($timeType == 'horaRecebimentolab') echo 'selected'; ?>>Hora de Recebimento Lab</option>
                         </select>
                     </div>
                     <div class="col-md-2">

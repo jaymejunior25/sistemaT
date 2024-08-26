@@ -18,11 +18,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
               $codigobarras = substr($codigobarras, 1, -1); // Remove o primeiro e o último dígito
           } else {
               if ($digitoverificarp === '=' && ctype_digit($digitoverificaru)) {
-                  $codigobarras = substr($codigobarras, 1);
-                  $doisultimos_digitos = substr($codigobarras, -2);
+                $codigobarras = substr($codigobarras, 1);
+                $codigobarras = substr_replace($codigobarras, 'B', 0, 1);
+                $doisultimos_digitos = substr($codigobarras, -2);
                   
               } elseif(strlen($codigobarras) === 15){
-                  $doisultimos_digitos = substr($codigobarras, -2);
+                $codigobarras = substr_replace($codigobarras, 'B', 0, 1);
+                $doisultimos_digitos = substr($codigobarras, -2);
               }else {
                   if (($digitoverificarp === 'B' || $digitoverificarp === 'b') && ctype_digit($digitoverificaru)) {
                       $codigobarras = substr_replace($codigobarras, '0', -2, 1);

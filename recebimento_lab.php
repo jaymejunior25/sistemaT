@@ -84,6 +84,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         // Formatar a data para o formato 'aaaa-mm-dd'
         $data_recebimento = date('Y-m-d', strtotime($data_recebimento));
+
+
+        // Buscar informações do usuário baseado na matrícula informada
+        $stmt = $dbconn->prepare("SELECT u.id, u.nome, u.usuario, u.matricula, l.nome AS lab_nome
+        FROM usuarios u
+        JOIN usuario_laboratorio ul ON u.id = ul.usuario_id
+        JOIN laboratorio l ON ul.laboratorio_id = l.id
+        WHERE u.matricula = :matricula");
+        $stmt->execute([':matricula' => $matricula]);
+        $usuario_info = $stmt->fetch(PDO::FETCH_ASSOC);
         
         // Buscar o ID do laboratório com base no nome
         $stmt = $dbconn->prepare("SELECT id FROM laboratorio WHERE nome = :nome");
@@ -117,7 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                       AND status = 'recebido'
                 ");
     
-                $params = array_merge([$_SESSION['user_id']], $laboratorio_ids, [$data_recebimento]);
+                $params = array_merge([$usuario_info['id']], $laboratorio_ids, [$data_recebimento]);
                 $stmt->execute($params);
     
                 if ($stmt->rowCount() > 0) {
@@ -182,7 +192,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <?php else: ?>
                 <p>Não foi possível obter as informações do usuário.</p>
             <?php endif; ?>
-
+            <p><strong>Total de amostras:</strong> <?php echo count($amostras); ?></p>
             <table class="table table-striped mt-4">
             <thead class="theadfixed">
                     <tr>

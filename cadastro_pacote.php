@@ -59,9 +59,10 @@
             let digitoverificaru = codigoBarras.charAt(codigoBarras.length - 1);
 
             if (digitoverificarp === '=' && !isNaN(digitoverificaru)) {
-                return codigoBarras.slice(1);
+                codigoBarras=codigoBarras.slice(1);
+                return ('B'+codigoBarras.slice(1));
             }else if(codigoBarras.length == 15) {
-                return codigoBarras;
+                return ('B'+codigoBarras.slice(1));
             }
             else{ 
                 if ((digitoverificarp === 'B' || digitoverificarp === 'b') && !isNaN(digitoverificaru)) {

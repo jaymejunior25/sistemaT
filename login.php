@@ -20,6 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         //$local = $stmt->fetch(PDO::FETCH_ASSOC);
 
         $_SESSION['user_id'] = $user['id'];
+        $_SESSION['nome'] = $user['nome'];
         $_SESSION['username'] = $user['usuario'];
         $_SESSION['user_type'] = $user['tipoconta'];
         //$_SESSION['unidade_id'] = $user['unidade_id'];

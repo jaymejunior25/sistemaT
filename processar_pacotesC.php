@@ -20,6 +20,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $descricao = $pacote['descricao'];
         $codigobarras = $pacote['codigobarras'];
 
+        // Verificar se o código de barras e descrição já foram enviados hoje
+        $stmt = $dbconn->prepare("SELECT * FROM pacotes WHERE codigobarras = :codigobarras OR (unidade_cadastro_id = :unidade_cadastro_id and descricao = :descricao AND DATE(data_cadastro) = CURRENT_DATE)");
+        $stmt->execute([':codigobarras' => $codigobarras,':unidade_cadastro_id'=> $local_id, ':descricao' => $descricao]);
+        $pacote_existente_enviado = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($pacote_existente_enviado) {
+            $messages[] =  'O' . $descricao . 'desta unidade já foi concluido! Por favor, tente utilza o proximo envio.';
+            continue;
+        }
+
         // Verificar se o código de barras já existe no banco de dados
         $stmt = $dbconn->prepare("SELECT * FROM pacotes WHERE codigobarras = :codigobarras");
         $stmt->execute([':codigobarras' => $codigobarras]);

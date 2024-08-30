@@ -59,7 +59,7 @@ $available_columns = [
     'lab_nome' => 'Laboratorio',
     'data_cadastro' => 'Data de Cadastro',
     'data_envio' => 'Data de Envio',
-
+    'cadastro_nome' => 'Local de Cadastro',
     'envio_nome' => 'Local de Envio',
     'cadastrado_por' => 'Cadastrado por',
     'enviado_por' => 'Enviado por',
@@ -89,9 +89,14 @@ if ($filter == 'enviados') {
     $conditions[] = "p.status = 'cadastrado'";
 }
 
-if (!empty($local_id)) {
+if (!empty($local_id)  && !empty($filterL) ) {
+    if($filter == 'enviados'){
     $conditions[] = "p.unidade_envio_id = :local_id";
-    $params[':local_id'] = $local_id;
+    $params[':local_id'] = $local_id;}
+    elseif($filter == 'cadastrado'){
+        $conditions[] = "p.unidade_cadastro_id = :local_id";
+        $params[':local_id'] = $local_id;
+    }
 }
 
 if (!empty($searchType) && !empty($searchQuery)) {
@@ -229,6 +234,14 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <option value="cadastrado" <?php if ($filter == 'cadastrado') echo 'selected'; ?>>Cadastrados</option>
                     </select>
                 </div>
+                <div class="form-group mb-2">
+                    <label for="filterL" class="mr-2">Local de:</label>
+                    <select name="filterL" id="filterL" class="form-control">
+                        <option value="">Todos</option>
+                        <option value="enviados" <?php if ($filter == 'enviados') echo 'selected'; ?>>Enviados</option>
+                        <option value="cadastrado" <?php if ($filter == 'cadastrado') echo 'selected'; ?>>Cadastrados</option>
+                    </select>
+                </div>
                 <div class="form-group mb-2 ml-2">
                     <label for="local_id" class="mr-2">Local:</label>
                     <select name="local_id" id="local_id" class="form-control">
@@ -324,6 +337,10 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                     // $dateTime = new DateTime($pacote['data_envio']);
                                                     // echo $dateTime->format('d-m-Y H:i');
                                                     //echo htmlspecialchars($pacote['data_envio']);
+                                                    break;
+
+                                                case 'cadastro_nome':
+                                                    echo htmlspecialchars($pacote['cadastro_nome']);
                                                     break;
                                                
                                                 case 'envio_nome':

@@ -101,6 +101,13 @@
                     alert('Pacote com código de barras ' + codigobarrasFiltrado + ' já existe na lista.');
                     return;
                 }
+                // Verificação se algum código de barras na lista contém o código informado
+                let codigoContido = pacotes.some(pacote => codigobarrasFiltrado.includes(pacote.codigobarrasFiltrado));
+
+                if (codigoContido) {
+                    alert('O código de barras ' + codigobarrasFiltrado + ' contém um código já existente na lista.');
+                    return;
+                }
 
                 // Verificação de duplicidade no banco de dados
                 fetch('verificar_codigo_barras.php', {

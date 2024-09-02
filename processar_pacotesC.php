@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $codigobarras = $pacote['codigobarras'];
 
         // Verificar se o código de barras e descrição já foram enviados hoje
-        $stmt = $dbconn->prepare("SELECT * FROM pacotes WHERE codigobarras = :codigobarras OR (unidade_cadastro_id = :unidade_cadastro_id and descricao = :descricao AND DATE(data_cadastro) = CURRENT_DATE)");
+        $stmt = $dbconn->prepare("SELECT * FROM pacotes WHERE codigobarras = :codigobarras OR (unidade_cadastro_id = :unidade_cadastro_id and descricao = :descricao AND DATE(data_cadastro) = CURRENT_DATE) and status = 'enviado' ");
         $stmt->execute([':codigobarras' => $codigobarras,':unidade_cadastro_id'=> $local_id, ':descricao' => $descricao]);
         $pacote_existente_enviado = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -39,6 +39,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $messages[] = 'Pacote com código de barras ' . $codigobarras . ' já existe no banco de dados.';
             continue;
         }
+
+
+        // Verificar se o novo código de barras contém algum código existente no banco de dados
+        $stmt = $dbconn->prepare("SELECT codigobarras FROM pacotes");
+        $stmt->execute();
+        $pacotes_existentes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $codigo_contido = false;
+
+        foreach ($pacotes_existentes as $pacote) {
+            if (strpos($codigobarras, $pacote['codigobarras']) !== false) {
+                $messages[] = 'O código de barras informado ' . $codigobarras . ' contém o código já cadastrado: ' . $pacote['codigobarras'] . '.';
+                $codigo_contido = true;
+                break;
+            }
+        }
+
+        if ($codigo_contido) {
+            continue;
+        }
+
+        
 
         // Separa o primeiro e o último dígito do código de barras
         $digitoverificarp = substr($codigobarras, 0, 1);

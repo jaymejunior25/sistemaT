@@ -14,24 +14,29 @@ if ($_SESSION['user_type'] != 'admin') {
 
 $searchType = $_GET['searchType'];
 $searchQuery = $_GET['searchQuery'];
-$queryParam = '%' . $searchQuery . '%';
-
-$sql = "SELECT u.*, uh.nome AS unidade_nome 
-        FROM usuarios u
-        LEFT JOIN unidadehemopa uh ON u.unidade_id = uh.id";
+// $queryParam = '%' . $searchQuery . '%';
+$queryParam = '%' . strtolower($searchQuery) . '%';
+$sql = "SELECT u.*, uh.nome AS unidade_nome, l.nome AS lab_nome
+    FROM usuarios u
+    LEFT JOIN usuario_laboratorio ul ON u.id = ul.usuario_id
+    LEFT JOIN laboratorio l ON ul.laboratorio_id = l.id
+    LEFT JOIN unidadehemopa uh ON u.unidade_id = uh.id";
 
 switch ($searchType) {
     case 'nome':
-        $sql .= " WHERE u.nome LIKE :query";
+        $sql .= " WHERE LOWER(u.nome) LIKE :query";
         break;
     case 'usuario':
-        $sql .= " WHERE u.usuario LIKE :query";
+        $sql .= " WHERE LOWER(u.usuario) LIKE :query";
         break;
     case 'matricula':
         $sql .= " WHERE u.matricula LIKE :query";
         break;
     case 'unidade':
-        $sql .= " WHERE uh.nome LIKE :query";
+        $sql .= " WHERE LOWER(uh.nome) LIKE :query";
+        break;
+    case 'laboratorio':
+        $sql .= " WHERE LOWER(l.nome) LIKE :query";
         break;
     default:
         $sql .= " WHERE 1";
@@ -68,6 +73,7 @@ $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <th>Usuario</th>
                         <th>Unidade</th>
                         <th>Tipo Conta</th>
+                        <th>Laboratorio</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
@@ -81,6 +87,7 @@ $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <td><?php echo htmlspecialchars($usuario['usuario']); ?></td>
                                 <td><?php echo htmlspecialchars($usuario['unidade_nome']); ?></td>
                                 <td><?php echo htmlspecialchars($usuario['tipoconta']); ?></td>
+                                <td><?php echo htmlspecialchars($usuario['lab_nome'] ?: 'Sem laboratório'); ?></td> <!-- Exibe 'Sem laboratório' se o valor for NULL -->
                                 <td>
                                     <a href="editar.php?id=<?php echo $usuario['id']; ?>" class="btn btn-sm btn-info">
                                         <i class="fas fa-edit"></i> Editar
@@ -100,7 +107,7 @@ $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </table>
         </div>
         <div class="text-center mt-3">
-            <a href="index.php" class="btn btn-secondary"><i class="fas fa-angle-left"></i>Voltar</a>
+            <a href="listar.php" class="btn btn-secondary"><i class="fas fa-angle-left"></i>Voltar</a>
             <a href="index.php" class="btn btn-secondary"><i class="fas fa-home"></i> Home</a>
             <a href="#" class="btn btn-custom" data-toggle="modal" data-target="#searchModal">
                 <i class="fas fa-search"></i> Pesquisar Usuários

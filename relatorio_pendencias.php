@@ -59,22 +59,22 @@ $available_columns = [
     'lab_nome' => 'Laboratorio',
     'data_cadastro' => 'Data de Cadastro',
     'data_envio' => 'Data de Envio',
-    'data_recebimento' => 'Data de Recebimento',
+    'cadastro_nome' => 'Local de Cadastro',
     'envio_nome' => 'Local de Envio',
     'cadastrado_por' => 'Cadastrado por',
     'enviado_por' => 'Enviado por',
-    'recebido_por' => 'Recebido por'
+
 ];
 
 // Construir a consulta SQL com base nos filtros
-$sql = "SELECT p.id, p.status, p.codigobarras, p.descricao, p.data_envio, p.data_recebimento, p.data_cadastro, l_lab.nome AS lab_nome, l_envio.nome AS envio_nome, u_envio.usuario AS enviado_por, u_recebimento.usuario AS recebido_por,
+$sql = "SELECT p.id, p.status, p.codigobarras, p.descricao, p.data_envio, p.data_cadastro, l_lab.nome AS lab_nome, l_envio.nome AS envio_nome, u_envio.usuario AS enviado_por,
         u_cadastro.usuario AS cadastrado_por, l_cadastro.nome AS cadastro_nome 
         FROM pacotes p 
         LEFT JOIN unidadehemopa l_envio ON p.unidade_envio_id = l_envio.id 
         LEFT JOIN unidadehemopa l_cadastro ON p.unidade_cadastro_id = l_cadastro.id 
         LEFT JOIN usuarios u_cadastro ON p.usuario_cadastro_id = u_cadastro.id 
         LEFT JOIN usuarios u_envio ON p.usuario_envio_id = u_envio.id 
-        LEFT JOIN usuarios u_recebimento ON p.usuario_recebimento_id = u_recebimento.id
+        
         LEFT JOIN laboratorio l_lab ON p.lab_id = l_lab.id";
 
 $conditions = [];
@@ -89,9 +89,14 @@ if ($filter == 'enviados') {
     $conditions[] = "p.status = 'cadastrado'";
 }
 
-if (!empty($local_id)) {
+if (!empty($local_id)  && !empty($filterL) ) {
+    if($filter == 'enviados'){
     $conditions[] = "p.unidade_envio_id = :local_id";
-    $params[':local_id'] = $local_id;
+    $params[':local_id'] = $local_id;}
+    elseif($filter == 'cadastrado'){
+        $conditions[] = "p.unidade_cadastro_id = :local_id";
+        $params[':local_id'] = $local_id;
+    }
 }
 
 if (!empty($searchType) && !empty($searchQuery)) {
@@ -109,17 +114,23 @@ if (!empty($searchType) && !empty($searchQuery)) {
                 $codigobarras = substr($codigobarras, 1);
                 // Extrair os dois últimos dígitos do código de barras
                 $doisultimos_digitos = substr($codigobarras, -2);
-            } elseif ($digitoverificarp == 'B' || $digitoverificarp == 'b' && ctype_digit($digitoverificaru)) {
-                $codigobarras = substr_replace($codigobarras, '0', -2, 1);
-                // Extrair o penúltimo dígito do código de barras
-                $penultimo_digito = substr($codigobarras, -2, 1);
-            } elseif(($digitoverificarp == 'A' || $digitoverificarp == 'a')&& ($digitoverificaru == 'B' || $digitoverificaru == 'b')) {
-                $codigobarras = substr($codigobarras, 1, -1);
+            } elseif(strlen($codigobarras) === 15){
+                $codigobarras = substr($codigobarras, 1);
+                // Extrair os dois últimos dígitos do código de barras
                 $doisultimos_digitos = substr($codigobarras, -2);
-            }else {
-                $codigobarras = substr($codigobarras, 1, -1);
-                // Extrair o penúltimo dígito do código de barras
-                $penultimo_digito = substr($codigobarras, -2, 1);
+            }else{
+                if ($digitoverificarp == 'B' || $digitoverificarp == 'b' && ctype_digit($digitoverificaru)) {
+                    $codigobarras = substr_replace($codigobarras, '0', -2, 1);
+                    // Extrair o penúltimo dígito do código de barras
+                    $penultimo_digito = substr($codigobarras, -2, 1);
+                } elseif(($digitoverificarp == 'A' || $digitoverificarp == 'a')&& ($digitoverificaru == 'B' || $digitoverificaru == 'b')) {
+                    $codigobarras = substr($codigobarras, 1, -1);
+                    $doisultimos_digitos = substr($codigobarras, -2);
+                }else {
+                    $codigobarras = substr($codigobarras, 1, -1);
+                    // Extrair o penúltimo dígito do código de barras
+                    $penultimo_digito = substr($codigobarras, -2, 1);
+                }
             }
             $queryParam = '%' . $codigobarras . '%';
             $conditions[] = "p.codigobarras LIKE :query";
@@ -129,9 +140,6 @@ if (!empty($searchType) && !empty($searchQuery)) {
             break;
         case 'usuario_envio':
             $conditions[] = "LOWER(u_envio.usuario) LIKE :query";
-            break;
-        case 'usuario_recebimento':
-            $conditions[] = "LOWER(u_recebimento.usuario) LIKE :query";
             break;
         case 'unidade_envio':
             $conditions[] = "LOWER(l_envio.nome) LIKE :query";
@@ -152,9 +160,7 @@ if (!empty($dateType) && !empty($dateValue)) {
         case 'dataEnvio':
             $conditions[] = "DATE(p.data_envio) = :dateValue";
             break;
-        case 'dataRecebimento':
-            $conditions[] = "DATE(p.data_recebimento) = :dateValue";
-            break;
+        
         default:
             break;
     }
@@ -228,6 +234,14 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <option value="cadastrado" <?php if ($filter == 'cadastrado') echo 'selected'; ?>>Cadastrados</option>
                     </select>
                 </div>
+                <div class="form-group mb-2">
+                    <label for="filterL" class="mr-2">Local de:</label>
+                    <select name="filterL" id="filterL" class="form-control">
+                        <option value="">Todos</option>
+                        <option value="enviados" <?php if ($filter == 'enviados') echo 'selected'; ?>>Enviados</option>
+                        <option value="cadastrado" <?php if ($filter == 'cadastrado') echo 'selected'; ?>>Cadastrados</option>
+                    </select>
+                </div>
                 <div class="form-group mb-2 ml-2">
                     <label for="local_id" class="mr-2">Local:</label>
                     <select name="local_id" id="local_id" class="form-control">
@@ -244,7 +258,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <option value="codigobarras" <?php if ($searchType == 'codigobarras') echo 'selected'; ?>>Codigo de Barras</option>
                         <option value="usuario_cadastro" <?php if ($searchType == 'usuario_cadastro') echo 'selected'; ?>>Usuario de Cadastro</option>
                         <option value="usuario_envio" <?php if ($searchType == 'usuario_envio') echo 'selected'; ?>>Usuario de Envio</option>
-                        <option value="usuario_recebimento" <?php if ($searchType == 'usuario_recebimento') echo 'selected'; ?>>Usuario de Recebimento</option>
+                        
                         <option value="unidade_envio" <?php if ($searchType == 'unidade_envio') echo 'selected'; ?>>Unidade de Envio</option>
                         <option value="lab_nome" <?php if ($searchType == 'lab_nome') echo 'selected'; ?>>Laboratorio</option>
                     </select>
@@ -259,7 +273,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <option value="">Selecionar</option>
                         <option value="dataCadastro" <?php if ($dateType == 'dataCadastro') echo 'selected'; ?>>Data de Cadastro</option>
                         <option value="dataEnvio" <?php if ($dateType == 'dataEnvio') echo 'selected'; ?>>Data de Envio</option>
-                        <option value="dataRecebimento" <?php if ($dateType == 'dataRecebimento') echo 'selected'; ?>>Data de Recebimento</option>
+                        
                     </select>
                 </div>
                 <div class="form-group mr-3">
@@ -311,14 +325,24 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                     echo htmlspecialchars($pacote['lab_nome']);
                                                     break;
                                                 case 'data_cadastro':
-                                                    echo htmlspecialchars($pacote['data_cadastro']);
+                                                   // echo !empty($pacote['data_cadastro']) ? date('d-m-Y H:i', strtotime($pacote['data_cadastro'])) : '';
+
+                                                    $dateTime = new DateTime($pacote['data_cadastro']);
+                                                    echo $dateTime->format('d-m-Y H:i');
+                                                    //echo htmlspecialchars($pacote['data_cadastro']);
                                                     break;
                                                 case 'data_envio':
-                                                    echo htmlspecialchars($pacote['data_envio']);
+                                                    echo !empty($pacote['data_envio']) ? date('d-m-Y H:i', strtotime($pacote['data_envio'])) : '';
+
+                                                    // $dateTime = new DateTime($pacote['data_envio']);
+                                                    // echo $dateTime->format('d-m-Y H:i');
+                                                    //echo htmlspecialchars($pacote['data_envio']);
                                                     break;
-                                                case 'data_recebimento':
-                                                    echo htmlspecialchars($pacote['data_recebimento']);
+
+                                                case 'cadastro_nome':
+                                                    echo htmlspecialchars($pacote['cadastro_nome']);
                                                     break;
+                                               
                                                 case 'envio_nome':
                                                     echo htmlspecialchars($pacote['envio_nome']);
                                                     break;
@@ -328,9 +352,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                 case 'enviado_por':
                                                     echo htmlspecialchars($pacote['enviado_por']);
                                                     break;
-                                                case 'recebido_por':
-                                                    echo htmlspecialchars($pacote['recebido_por']);
-                                                    break;
+                                                
                                                 default:
                                                     break;
                                             }
@@ -358,14 +380,14 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <div class="text-center mb-4">
                 <p><strong>Total de Amostras:</strong> <?php echo count($pacotes); ?></p>
             </div>
-            <form method="post" action="Relatorio de pendencias pdf.php" target="_blank">
+            <!--<form method="post" action="Relatorio de pendencias pdf.php" target="_blank">
                 <input type="hidden" name="data_inicio" value="<?php echo htmlspecialchars($data_inicio); ?>">
                 <?php foreach ($colunas_selecionadas as $coluna): ?>
                     <input type="hidden" name="colunas[]" value="<?php echo htmlspecialchars($coluna); ?>">
                 <?php endforeach; ?>
                 <button type="submit" class="btn btn-danger"><i class="far fa-file-pdf"></i> Baixar PDF</button>
-            </form>
-            
+            </form>-->
+            <a href="Relatorio de pendencias pdf.php?filter=<?= urlencode($filter) ?>&local_id=<?= urlencode($local_id) ?>&data_inicio=<?= urlencode($data_inicio) ?>&searchType=<?= urlencode($searchType) ?>&searchQuery=<?= urlencode($searchQuery) ?>&dateType=<?= urlencode($dateType) ?>&dateValue=<?= urlencode($dateValue) ?>&columns[]=<?= implode('&columns[]=', $colunas_selecionadas) ?>" class="btn btn-danger" target="_blank"><i class="far fa-file-pdf"></i>Gerar PDF</a>
            
         <?php endif; ?>
         <div class="text-center mt-3">

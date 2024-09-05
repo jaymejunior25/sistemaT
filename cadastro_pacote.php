@@ -13,16 +13,24 @@
     <div class="container container-customlistas">
         <h1 class="text-center mb-4" style="color: #28a745;">Cadastrar Amostra</h1>
         <form id="pacoteForm">
-            <div class="form-group">
-                <label for="descricao" style="color: #28a745;">Descrição:</label>
-                <input type="text" name="descricao" id="descricao" class="form-control" required>
-            </div>
+        <div class="form-group">
+            <label for="descricao" style="color: #28a745;">Descrição:</label>
+            <select name="descricao" id="descricao" class="form-control" required>
+                <option value="1° ENVIO">1° ENVIO</option>
+                <option value="2° ENVIO">2° ENVIO</option>
+                <option value="3° ENVIO">3° ENVIO</option>
+                <option value="4° ENVIO">4° ENVIO</option>
+            </select>
+        </div>
             <div class="form-group">
                 <label for="codigobarras" style="color: #28a745;">Código de Barras:</label>
                 <input type="text" name="codigobarras" id="codigobarras" class="form-control" required>
             </div>
             <button type="button" id="adicionarPacote" class="btn btn-primary btn-block mt-3"><i class="fas fa-plus"></i> Adicionar Pacote</button>
         </form>
+        <div class="mt-3">
+            <h4 id="totalPacotes" class="text-center"></h4> <!-- Total de Pacotes -->
+        </div>
         <div id="pacotesList" class="mt-3"></div>
         <button type="button" id="cadastrarTodos" class="btn btn-success btn-block mt-3"><i class="fas fa-check"></i> Cadastrar Todos</button>
         <div class="text-center mt-3">
@@ -45,28 +53,41 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
         let pacotes = [];
+        let addingPackage = false;
 
         function filtrarCodigoBarras(codigoBarras) {
             let digitoverificarp = codigoBarras.charAt(0);
             let digitoverificaru = codigoBarras.charAt(codigoBarras.length - 1);
 
             if (digitoverificarp === '=' && !isNaN(digitoverificaru)) {
-                return codigoBarras.slice(1);
-            } else if ((digitoverificarp === 'B' || digitoverificarp === 'b') && !isNaN(digitoverificaru)) {
-                return codigoBarras.slice(0, -2) + '0' + codigoBarras.slice(-1);
-            } else if ((digitoverificarp === 'A' || digitoverificarp === 'a') && (digitoverificaru === 'B' || digitoverificaru === 'b')) {
-                return codigoBarras.slice(1, -1);
-            } else if ((digitoverificarp === 'A' || digitoverificarp === 'a') && (digitoverificaru === 'A' || digitoverificaru === 'a')){
-                return codigoBarras.slice(1, -1);
-            } else {
-                return codigoBarras;
+                codigoBarras=codigoBarras.slice(1);
+                return ('B'+codigoBarras.slice(1));
+            }else if(codigoBarras.length == 15) {
+                return ('B'+codigoBarras.slice(1));
+            }
+            else{ 
+                if ((digitoverificarp === 'B' || digitoverificarp === 'b') && !isNaN(digitoverificaru)) {
+                    return codigoBarras.slice(0, -2) + '0' + codigoBarras.slice(-1);
+                } else if ((digitoverificarp === 'A' || digitoverificarp === 'a') && (digitoverificaru === 'B' || digitoverificaru === 'b')) {
+                    return codigoBarras.slice(1, -1);
+                } else if ((digitoverificarp === 'A' || digitoverificarp === 'a') && (digitoverificaru === 'A' || digitoverificaru === 'a')){
+                    return codigoBarras.slice(1, -1);
+                } else {
+                    return codigoBarras;
+                }
             }
         }
+
         function codigoBarrasDuplicado(codigobarrasFiltrado) {
             return pacotes.some(pacote => pacote.codigobarrasFiltrado === codigobarrasFiltrado);
         }
 
-        document.getElementById('adicionarPacote').addEventListener('click', function() {
+        function adicionarPacote() {
+            if (addingPackage) return;
+
+            addingPackage = true;
+            setTimeout(() => addingPackage = false, 1000); // Evita adicionar o mesmo pacote em menos de 1 segundo
+
             const descricao = document.getElementById('descricao').value;
             const codigobarras = document.getElementById('codigobarras').value;
 
@@ -74,10 +95,21 @@
                 const codigobarrasFiltrado = filtrarCodigoBarras(codigobarras);
 
                 // Verificação de duplicidade na lista dinâmica
-                let duplicado = pacotes.some(pacote => pacote.codigobarras === codigobarrasFiltrado);
+                let duplicado = pacotes.some(pacote => pacote.codigobarrasFiltrado === codigobarrasFiltrado);
 
                 if (duplicado) {
                     alert('Pacote com código de barras ' + codigobarrasFiltrado + ' já existe na lista.');
+                    document.getElementById('codigobarras').value = ''; // Limpa o campo de código de barras
+                    document.getElementById('codigobarras').focus(); // Mantém o foco no campo de código de barras
+                    return;
+                }
+                // Verificação se algum código de barras na lista contém o código informado
+                let codigoContido = pacotes.some(pacote => codigobarrasFiltrado.includes(pacote.codigobarrasFiltrado));
+
+                if (codigoContido) {
+                    alert('O código de barras ' + codigobarrasFiltrado + ' contém um código já existente na lista.');
+                    document.getElementById('codigobarras').value = ''; // Limpa o campo de código de barras
+                    document.getElementById('codigobarras').focus(); // Mantém o foco no campo de código de barras
                     return;
                 }
 
@@ -93,6 +125,12 @@
                 .then(data => {
                     if (data.status === 'exists') {
                         alert('Pacote com código de barras ' + codigobarrasFiltrado + ' já existe no banco de dados.');
+                        document.getElementById('codigobarras').value = ''; // Limpa o campo de código de barras
+                        document.getElementById('codigobarras').focus(); // Mantém o foco no campo de código de barras
+                    } else if (data.status === 'lab_nexiste'){
+                        alert('Pacote com código de barras ' + codigobarrasFiltrado + ' não é de nenhum laboratorio cadastrado no sistema.');
+                        document.getElementById('codigobarras').value = ''; // Limpa o campo de código de barras
+                        document.getElementById('codigobarras').focus(); // Mantém o foco no campo de código de barras
                     } else {
                         pacotes.push({ descricao, codigobarras, codigobarrasFiltrado });
                         atualizarListaPacotes();
@@ -102,6 +140,15 @@
                 });
             } else {
                 alert('Por favor, preencha todos os campos.');
+            }
+        }
+
+        document.getElementById('adicionarPacote').addEventListener('click', adicionarPacote);
+
+        document.getElementById('codigobarras').addEventListener('keydown', function(event) {
+            if (event.key === 'Tab' || event.key === 'Enter') {
+                event.preventDefault();
+                adicionarPacote();
             }
         });
 
@@ -139,7 +186,11 @@
 
         function atualizarListaPacotes() {
             const lista = document.getElementById('pacotesList');
+            const totalPacotes = document.getElementById('totalPacotes');
             lista.innerHTML = '';
+
+            // Atualizar o total de pacotes
+            totalPacotes.textContent = `Total de Amostras: ${pacotes.length}`;
 
             // Percorre a lista de pacotes invertida para adicionar no topo
             for (let i = pacotes.length - 1; i >= 0; i--) {
@@ -154,6 +205,7 @@
                 lista.appendChild(item);
             }
         }
+
         function removerPacote(index) {
             pacotes.splice(index, 1);
             atualizarListaPacotes();

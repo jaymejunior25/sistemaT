@@ -17,7 +17,7 @@ $stmt = $dbconn->prepare("SELECT id, nome FROM unidadehemopa");
 $stmt->execute();
 $locais = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' ) {
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $senha_confirmacao = $_POST['senha_confirmacao'];
     $user_id = $_SESSION['user_id'];
 
@@ -33,8 +33,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' ) {
         $usuario = $_POST['usuario'];
         $senha = password_hash($_POST['senha'], PASSWORD_BCRYPT); // Hash da senha
         $tipo = $_POST['tipoconta'];
-        $local_id = $_POST['unidadehemopa_id'];
+        $locais_selecionados = $_POST['unidades_hemopa'];
         $confirmar_senha = $_POST['confirmar_senha'];
+        
         // Validar senha
         if (strlen($_POST['senha']) < 6 || !preg_match('/[A-Za-z]/', $_POST['senha']) || !preg_match('/\d/', $_POST['senha'])) {
             $_SESSION['error_message'] = 'A senha deve ter pelo menos 6 caracteres e incluir números e letras.';
@@ -42,8 +43,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' ) {
             $_SESSION['error_message'] = 'As senhas não correspondem.';
         } else {
             // Inserir o novo usuário no banco de dados
-            $stmt = $dbconn->prepare("INSERT INTO usuarios (nome, senha, matricula, tipoconta, unidade_id, usuario) VALUES (:nome, :senha, :matricula, :tipoconta, :unidadehemopa_id, :usuario)");
-            $stmt->execute(['nome' => $nome, 'senha' => $senha, 'matricula' => $matricula, 'tipoconta' => $tipo, 'unidadehemopa_id' => $local_id, 'usuario' => $usuario]);
+            $stmt = $dbconn->prepare("INSERT INTO usuarios (nome, matricula, tipoconta, usuario, senha) VALUES (:nome, :matricula, :tipoconta, :usuario, :senha)");
+            $stmt->execute(['nome' => $nome, 'matricula' => $matricula, 'tipoconta' => $tipo, 'usuario' => $usuario, 'senha' => $senha]);
+
+            // Obter o ID do usuário recém-criado
+            $usuario_id = $dbconn->lastInsertId();
+
+            // Inserir os locais selecionados na tabela usuario_local
+            foreach ($locais_selecionados as $local_id) {
+                $stmt = $dbconn->prepare("INSERT INTO usuario_local (usuario_id, local_id) VALUES (:usuario_id, :local_id)");
+                $stmt->execute(['usuario_id' => $usuario_id, 'local_id' => $local_id]);
+            }
 
             $_SESSION['success_message'] = 'Usuário cadastrado com sucesso!';
         }
@@ -95,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' ) {
                 <input type="password" name="senha" id="senha" class="form-control" required>
             </div>
             <div class="form-group">
-                <label for="confirmar_senha " style="color: #28a745;">Confirmar Senha</label>
+                <label for="confirmar_senha" style="color: #28a745;">Confirmar Senha</label>
                 <input type="password" class="form-control" id="confirmar_senha" name="confirmar_senha" required>
             </div>
             <div class="form-group">
@@ -106,24 +116,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' ) {
                 </select>
             </div>
             <div class="form-group">
-                <label for="unidadehemopa_id" style="color: #28a745">Local:</label>
-                <select name="unidadehemopa_id" id="unidadehemopa_id" class="form-control" required>
+                <label for="unidades_hemopa" style="color: #28a745">Locais:</label>
+                <div>
                     <?php foreach ($locais as $local): ?>
-                        <option value="<?php echo $local['id']; ?>"><?php echo $local['nome']; ?></option>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" name="unidades_hemopa[]" value="<?php echo $local['id']; ?>">
+                            <label class="form-check-label" style="color: #28a745;"><?php echo $local['nome']; ?></label>
+                        </div>
                     <?php endforeach; ?>
-                </select><br><br>
+                </div>
             </div>
             <button type="button" class="btn btn-custom btn-block" data-toggle="modal" data-target="#confirmPasswordModal">
                 <i class="fas fa-user-plus"></i> Cadastrar
             </button>
         </form>
         <div class="text-center mt-3">
-            <a href="index.php" class="btn btn-secondary">
-            <i class="fas fa-angle-left"></i> Voltar</a>
+            <a href="index.php" class="btn btn-secondary"><i class="fas fa-angle-left"></i> Voltar</a>
         </div>
-        <a href="logout.php" class="btn btn-danger btn-lg mt-3">
-            <i class="fas fa-sign-out-alt"></i> Logout
-        </a>
+        <a href="logout.php" class="btn btn-danger btn-lg mt-3"><i class="fas fa-sign-out-alt"></i> Logout</a>
     </div>
 
     <!-- Modal de Confirmação de Senha -->
@@ -159,10 +169,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' ) {
         </div>
     </div>
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.6.0/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
-
+        
         document.getElementById('confirmarCadastro').addEventListener('click', function () {
             // Adiciona o campo de confirmação de senha ao formulário
             var senhaConfirmacao = document.getElementById('senha_confirmacao').value;
@@ -200,6 +210,3 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' ) {
     </script>
 </body>
 </html>
-
-
-

@@ -12,13 +12,32 @@ if ($_SESSION['user_type'] != 'admin') {
     exit();
 }
 
+// Modificar a consulta para incluir todos os usuários
+$stmt = $dbconn->query("
+    SELECT u.*, uh.nome AS unidade_nome, l.nome AS lab_nome
+    FROM usuarios u
+    LEFT JOIN usuario_laboratorio ul ON u.id = ul.usuario_id
+    LEFT JOIN laboratorio l ON ul.laboratorio_id = l.id
+    LEFT JOIN unidadehemopa uh ON u.unidade_id = uh.id
+");
 
 
 $stmt = $dbconn->query("
-    SELECT u.*, uh.nome AS unidade_nome 
+    SELECT u.*, 
+           uh.nome AS unidade_nome, 
+           l.nome AS lab_nome,
+           (SELECT nome 
+            FROM unidadehemopa l 
+            JOIN usuario_local ul ON ul.local_id = l.id 
+            WHERE ul.usuario_id = u.id 
+            LIMIT 1) AS primeiro_local_nome
     FROM usuarios u
+    LEFT JOIN usuario_laboratorio ul ON u.id = ul.usuario_id
+    LEFT JOIN laboratorio l ON ul.laboratorio_id = l.id
     LEFT JOIN unidadehemopa uh ON u.unidade_id = uh.id
 ");
+
+
 $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 ?>
@@ -51,24 +70,26 @@ $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <table class="table table-bordered table-hover table-striped">
                 <thead class="theadfixed">
                     <tr>
-                        <th>ID</th>
+                        <!-- <th>ID</th> -->
                         <th>Nome</th>
                         <th>Matricula</th>
                         <th>Usuario</th>
                         <th>Unidade</th>
                         <th>Tipo Conta</th>
+                        <th>Laboratorio</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php foreach ($usuarios as $usuario): ?>
                         <tr>
-                            <td><?php echo htmlspecialchars($usuario['id']); ?></td>
+                            <!-- <td><?php echo htmlspecialchars($usuario['id']); ?></td> -->
                             <td><?php echo htmlspecialchars($usuario['nome']); ?></td>
                             <td><?php echo htmlspecialchars($usuario['matricula']); ?></td>
                             <td><?php echo htmlspecialchars($usuario['usuario']); ?></td>
-                            <td><?php echo htmlspecialchars($usuario['unidade_nome']); ?></td>                                                     
+                            <td><?php echo htmlspecialchars($usuario['primeiro_local_nome']); ?></td>                                                     
                             <td><?php echo htmlspecialchars($usuario['tipoconta']); ?></td>
+                            <td><?php echo htmlspecialchars($usuario['lab_nome'] ?: 'Sem laboratório'); ?></td> <!-- Exibe 'Sem laboratório' se o valor for NULL -->
                             <!-- <td><?php echo htmlspecialchars(ucfirst($usuario['role'])); ?></td> -->
                             <td>
                                 <a href="editar.php?id=<?php echo $usuario['id']; ?>" class="btn btn-sm btn-info">
@@ -120,6 +141,7 @@ $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <option value="usuario">Usuário</option>
                                 <option value="matricula">Matrícula</option>
                                 <option value="unidade">Local de Cadastro</option>
+                                <option value="laboratorio">Laboratorio</option>
                             </select>
                         </div>
                         <div class="form-group">

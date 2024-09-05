@@ -1,48 +1,214 @@
 <?php
 session_start();
 include 'db.php';
+include 'fpdf.php';
+date_default_timezone_set('America/Sao_Paulo');
+function gerarPDF($pacotes, $totalPacotes) {
+    // Pega o nome do usuário logado da sessão
+    $usuarioLogado = isset($_SESSION['nome']) ? $_SESSION['nome'] : 'Usuário desconhecido';
+    // Pega a hora atual de geração do recibo
+    $horaAtual = date('d-m-Y H:i');
+    
+    $pdf = new FPDF();
+    $pdf->AddPage('L');
+    $pdf->Image('icon2.png', 10, 6, 16); // Adicionar imagem (ajuste a posição e o tamanho conforme necessário)
+    $pdf->SetFont('Arial', 'B', 8);
+    $pdf->Cell(0, 5, utf8_decode('GOVERNO DO ESTADO DO PARÁ'), 0, 1, 'C');
+    $pdf->Cell(0, 5, utf8_decode('SECRETARIA EXECUTIVA DE SAÚDE PÚBLICA'), 0, 1, 'C');
+    $pdf->Cell(0, 5, utf8_decode('CENTRO DE HEMOTERAPIA E HEMATOLOGIA DO PARÁ'), 0, 1, 'C');
+    $pdf->Cell(0, 5, utf8_decode('TV. PADRE EUTIQUIO, 2109 - Batista Campos TEL: (91) 3110-6500'), 0, 1, 'C');
+    $pdf->Ln(10); // Adiciona um pequeno espaçamento após o cabeçalho
 
+
+    
+    // Definir título do PDF
+    $pdf->SetFont('Arial', 'B', 16);
+    $pdf->Cell(0, 10, utf8_decode('Recibo de Envio de Amostras'), 0, 1, 'C');
+
+    // Adicionar o nome do usuário logado e a hora de geração do recibo
+    $pdf->SetFont('Arial', 'B', 10);
+    $pdf->Cell(0, 10, utf8_decode('Gerado por: ' . $usuarioLogado . ' em ' . $horaAtual), 0, 1, 'C');
+    $pdf->Ln(5); // Adiciona um pequeno espaçamento após o nome do usuário e a hora
+
+    // Adicionar total de amostras acima da tabela
+    $pdf->SetFont('Arial', 'B', 12);
+    $pdf->Cell(0, 10, utf8_decode('Total de Amostras Enviadas: ' . $totalPacotes), 0, 1, 'C');
+
+    // Definir cabeçalho da tabela
+    $pdf->SetFont('Arial', 'B', 10);
+    $pdf->Cell(35, 10, 'Descricao', 1);
+    $pdf->Cell(38, 10, 'Codigo de Barras', 1);
+    $pdf->Cell(35, 10, 'Laboratorio', 1);
+    $pdf->Cell(35, 10, 'Dt de Cadastro', 1);
+    $pdf->Cell(35, 10, 'Cadastrado Por', 1);
+    $pdf->Cell(38, 10, 'Local de Cadastro', 1);
+    $pdf->Cell(35, 10, 'Enviou por', 1); // Nova coluna
+    $pdf->Cell(35, 10, 'Dt de Envio', 1); // Nova coluna
+    $pdf->Ln();
+
+    // Preencher tabela com dados dos pacotes
+    $pdf->SetFont('Arial', '', 10);
+    foreach ($pacotes as $pacote) {
+        $pdf->Cell(35, 10, utf8_decode($pacote['descricao']), 1);
+        $pdf->Cell(38, 10, utf8_decode($pacote['codigobarras']), 1);
+        $pdf->Cell(35, 10, utf8_decode($pacote['lab_nome']), 1);
+        //$pdf->Cell(35, 10, date("d-m-Y H:i", strtotime($pacote['data_cadastro'])), 1);
+        $value = !empty($pacote['data_cadastro']) ? $pacote['data_cadastro'] : '';
+        $dateTime = new DateTime($value);
+        $value = $dateTime->format('d-m-Y H:i');
+        $pdf->Cell(35, 10, utf8_decode($value), 1);
+        $pdf->Cell(35, 10, utf8_decode($pacote['cadastrado_por']), 1);
+        $pdf->Cell(38, 10, utf8_decode($pacote['cadastro_nome']), 1);
+        $pdf->Cell(35, 10, utf8_decode($pacote['usuario_envio']), 1); // Novo campo
+        $pdf->Cell(35, 10, date("d-m-Y H:i", strtotime($pacote['data_envio'])), 1); // Novo campo
+        $pdf->Ln();
+    }
+
+    // Salvar PDF temporariamente
+    $pdfOutput = 'recibo_envio_amostras.pdf';
+    $pdf->Output('F', $pdfOutput);
+
+    // Retornar caminho do arquivo PDF gerado
+    return $pdfOutput;
+}
+
+// Verificar sessão do usuário
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit();
 }
 
 $local_envio_id = $_SESSION['unidade_id'];
-$status_cadastro= 'cadastrado';
+$status_cadastro = 'cadastrado';
+$pacotes = [];
+
+$filter_date = isset($_GET['filter_date']) ? $_GET['filter_date'] : date('Y-m-d');
+$filter_description = isset($_GET['filter_description']) ? $_GET['filter_description'] : null;
+
+// Construir a consulta SQL com os filtros
+$sql = "SELECT p.id, p.status, p.codigobarras, p.descricao, p.data_cadastro, l_lab.nome AS lab_nome,
+        u_cadastro.usuario AS cadastrado_por, l_cadastro.nome AS cadastro_nome,
+        u_envio.usuario AS usuario_envio, p.data_envio 
+        FROM pacotes p 
+        LEFT JOIN usuarios u_cadastro ON p.usuario_cadastro_id = u_cadastro.id 
+        LEFT JOIN unidadehemopa l_cadastro ON p.unidade_cadastro_id = l_cadastro.id 
+        LEFT JOIN laboratorio l_lab ON p.lab_id = l_lab.id
+        LEFT JOIN usuarios u_envio ON p.usuario_envio_id = u_envio.id
+        WHERE unidade_cadastro_id = :unidade_cadastro_id AND status = :status_cadastro";
+
+// Adicionar os filtros à consulta SQL
+$params = [
+    ':unidade_cadastro_id' => $local_envio_id,
+    ':status_cadastro' => $status_cadastro,
+];
+
+if ($filter_date) {
+    $sql .= " AND DATE(p.data_cadastro) = :filter_date";
+    $params[':filter_date'] = $filter_date;
+}
+
+if ($filter_description) {
+    $sql .= " AND p.descricao LIKE :filter_description";
+    $params[':filter_description'] = '%' . $filter_description . '%';
+}
+
+$sql .= " ORDER BY p.data_cadastro DESC";
+
+$stmt = $dbconn->prepare($sql);
+$stmt->execute($params);
+$pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+if ($pacotes) {
+    // Pegue a descrição do primeiro pacote
+    $descricao_primeiro_pacote = $pacotes[0]['descricao'];
+} else {
+    // Caso não haja pacotes, definir a descrição como null
+    $descricao_primeiro_pacote = null;
+}
+
+
+
+// Calcular o total de pacotes
+$totalPacotes = count($pacotes);
+
+// Processar o envio dos pacotes
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_password']) && isset($_POST['pacotes'])) {
-    // Obter pacotes selecionados
     $pacotes_selecionados = $_POST['pacotes'];
-    // Verificar a senha do usuário
     $stmt = $dbconn->prepare('SELECT senha FROM usuarios WHERE id = :id');
     $stmt->execute(['id' => $_SESSION['user_id']]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-
     if (password_verify($_POST['confirm_password'], $user['senha'])) {
-        // Atualizar todos os pacotes cadastrados para o status "enviado"
-        $stmt = $dbconn->prepare("UPDATE pacotes SET status = 'enviado', data_envio = NOW(), unidade_envio_id = :unidade_envio_id, usuario_envio_id = :usuario_envio_id WHERE unidade_cadastro_id = :unidade_cadastro_id AND status = 'cadastrado'");
-        $stmt->execute([
+        // Atualiza apenas os pacotes que foram filtrados e mostrados na tela
+        $sql = "UPDATE pacotes SET status = 'enviado', data_envio = NOW(), unidade_envio_id = :unidade_envio_id, usuario_envio_id = :usuario_envio_id
+                WHERE unidade_cadastro_id = :unidade_cadastro_id AND status = :status_cadastro";
+
+        // Adicionar filtros ao update, se existirem
+        $params = [
             ':unidade_envio_id' => $_SESSION['unidade_id'],
             ':usuario_envio_id' => $_SESSION['user_id'],
-            ':unidade_cadastro_id' => $local_envio_id
-        ]);
+            ':unidade_cadastro_id' => $local_envio_id,
+            ':status_cadastro' => $status_cadastro,
+        ];
+
+        if ($filter_date) {
+            $sql .= " AND DATE(data_cadastro) = :filter_date";
+            $params[':filter_date'] = $filter_date;
+        }
+
+        if ($filter_description) {
+            $sql .= " AND descricao LIKE :filter_description";
+            $params[':filter_description'] = '%' . $filter_description . '%';
+        }
+
+        $stmt = $dbconn->prepare($sql);
+        $stmt->execute($params);
+
         $_SESSION['success_message'] = 'Pacotes enviados com sucesso.';
+
+        // **Novo SELECT após o UPDATE**
+        $sql = "SELECT p.id, p.status, p.codigobarras, p.descricao, p.data_cadastro, l_lab.nome AS lab_nome,
+                u_cadastro.usuario AS cadastrado_por, l_cadastro.nome AS cadastro_nome,
+                u_envio.usuario AS usuario_envio, p.data_envio 
+                FROM pacotes p 
+                LEFT JOIN usuarios u_cadastro ON p.usuario_cadastro_id = u_cadastro.id 
+                LEFT JOIN unidadehemopa l_cadastro ON p.unidade_cadastro_id = l_cadastro.id 
+                LEFT JOIN laboratorio l_lab ON p.lab_id = l_lab.id
+                LEFT JOIN usuarios u_envio ON p.usuario_envio_id = u_envio.id
+                WHERE unidade_cadastro_id = :unidade_cadastro_id AND status = 'enviado' ";
+
+        // Adicionar os filtros à consulta SQL para garantir que estamos obtendo os pacotes corretos
+        $params = [
+            ':unidade_cadastro_id' => $local_envio_id,
+        ];
+
+        if ($filter_date) {
+            $sql .= " AND DATE(p.data_cadastro) = :filter_date";
+            $params[':filter_date'] = $filter_date;
+        }
+
+        if ($descricao_primeiro_pacote !== null) {
+            $sql .= " AND p.descricao = :descricao_primeiro_pacote";
+            $params[':descricao_primeiro_pacote'] = $descricao_primeiro_pacote;
+        }
+
+        $sql .= " ORDER BY p.data_cadastro DESC";
+
+        $stmt = $dbconn->prepare($sql);
+        $stmt->execute($params);
+        $pacotes1 = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $totalPacotes = count($pacotes1);
+
+        $pdfPath = gerarPDF($pacotes1, $totalPacotes);
+        echo "<script>window.open('$pdfPath', '_blank');</script>";
+       // header('Location: index.php');
     } else {
         $_SESSION['error_message'] = 'Senha incorreta. Por favor, tente novamente.';
     }
-    
 }
-
-// Obter a lista de pacotes cadastrados para o local do usuário
-$stmt = $dbconn->prepare("SELECT p.id, p.status, p.codigobarras, p.descricao,  p.data_cadastro, l_lab.nome AS lab_nome,
-                        u_cadastro.usuario AS cadastrado_por, l_cadastro.nome AS cadastro_nome  FROM pacotes p 
-                        LEFT JOIN usuarios u_cadastro ON p.usuario_cadastro_id = u_cadastro.id 
-                        LEFT JOIN unidadehemopa l_cadastro ON p.unidade_cadastro_id = l_cadastro.id 
-                        LEFT JOIN laboratorio l_lab ON p.lab_id = l_lab.id
-                        WHERE unidade_cadastro_id = :unidade_cadastro_id AND status = :status_cadastro ");
-$stmt->execute(['unidade_cadastro_id' => $local_envio_id, 'status_cadastro' => $status_cadastro]);
-$pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -57,7 +223,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 </head>
 <body>
     <div class="container container-customlistas">
-        <h1 class="text-center mb-4" >Enviar Amostras</h1>
+        <h1 class="text-center mb-4">Enviar Amostras</h1>
         <?php if (isset($_SESSION['success_message'])): ?>
             <div class="alert alert-success">
                 <?php echo $_SESSION['success_message']; unset($_SESSION['success_message']); ?>
@@ -68,19 +234,49 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <?php echo $_SESSION['error_message']; unset($_SESSION['error_message']); ?>
             </div>
         <?php endif; ?>
+        <form method="GET" action="">
+            <div class="form-row">
+            <div class="col-md-4 mb-3">
+                <label for="filter_date">Filtrar por Data de Cadastro:</label>
+                <input type="date" class="form-control" id="filter_date" name="filter_date" 
+                    value="<?php echo isset($_GET['filter_date']) ? htmlspecialchars($_GET['filter_date']) : date('Y-m-d'); ?>">
+            </div>
+                <div class="col-md-4 mb-3">
+                    <label for="filter_description">Filtrar por Descrição:</label>
+                    <div class="form-group">
+                        
+                        <select name="filter_description" id="filter_description" class="form-control" required>
+                            <option value="1° ENVIO">1° ENVIO</option>
+                            <option value="2° ENVIO">2° ENVIO</option>
+                            <option value="3° ENVIO">3° ENVIO</option>
+                            <option value="3° ENVIO">4° ENVIO</option>
+                        </select>
+                    </div>
+                    <!-- <button type="submit" class="btn btn-primary">Filtrar</button> -->
+                </div>
+                <div class="col-md-4 mb-3 align-self-center">
+                    <br>
+                    <button type="submit" class="btn btn-primary">Filtrar</button>
+                </div> 
+            </div>
+        </form>
+
+        <div class="mb-3 text-center">
+            <h4>Total de Amostras: <?php echo $totalPacotes; ?></h4> <!-- Total de Pacotes -->
+        </div>
         <form method="POST" action="" onsubmit="return confirmAction(event)">
             <div class="form-group">
-                <label for="pacotes" >Pacotes Cadastrados:</label>
+                <label for="pacotes">Pacotes Cadastrados:</label>
                 <div class="table-responsive">
                     <table class="table table-bordered table-hover table-striped">
                         <thead class="theadfixed">
                             <tr>
                                 <th>Descrição</th>
                                 <th>Código de Barras</th>
-                                <th>laboratorio</th>
+                                <th>Laboratório</th>
                                 <th>Data de Cadastro</th>
                                 <th>Cadastrado por</th>
-                                <th>Local de <br>Cadastro</th>
+                                <th>Local de Cadastro</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -98,12 +294,12 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     </table>
                 </div>
             </div>
-            <button type="submit" class="btn btn-custom btn-block"> <i class="fas fa-paper-plane"></i> Enviar</button>
+            <button type="submit" class="btn btn-custom btn-block"><i class="fas fa-paper-plane"></i> Enviar</button>
         </form>
         <div class="text-center mt-3">
             <a href="index.php" class="btn btn-secondary"><i class="fas fa-angle-left"></i> Voltar</a>
         </div>
-            <a href="logout.php" class="btn btn-danger btn-lg mt-3"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        <a href="logout.php" class="btn btn-danger btn-lg mt-3"><i class="fas fa-sign-out-alt"></i> Logout</a>
     </div>
     <!-- Modal de Confirmação -->
     <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModalLabel" aria-hidden="true">
@@ -150,8 +346,8 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             });
             //if (pacotes.length === 0) {
             //    alert('Por favor, selecione pelo menos um pacote.');
-             //   return false;
-           // }
+            //    return false;
+            //}
             document.getElementById('hidden_pacotes').value = JSON.stringify(pacotes);
             $('#confirmModal').modal('show');
         }
@@ -180,4 +376,3 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </script>
 </body>
 </html>
-

@@ -44,16 +44,17 @@
             </div>
         </div>
     </div>
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.6.0/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
         let pacotes = [];
 
-        document.getElementById('adicionarPacote').addEventListener('click', function() {
-            const codigobarras = document.getElementById('codigobarras').value;
+        function adicionarPacote() {
+            const codigobarras = document.getElementById('codigobarras').value.trim();
             const laboratorio = document.getElementById('laboratorio').value;
             const laboratorioNome = document.getElementById('laboratorio').options[document.getElementById('laboratorio').selectedIndex].text;
+
             if (codigobarras && laboratorio) {
                 // Verificar duplicidade na lista dinâmica
                 if (verificarDuplicidade(codigobarras)) {
@@ -80,42 +81,7 @@
             } else {
                 alert('Por favor, preencha todos os campos.');
             }
-        });
-
-        document.getElementById('receberTodos').addEventListener('click', function() {
-            if (pacotes.length === 0) {
-                alert('Nenhum pacote para receber.');
-                return;
-            }
-
-            fetch('processarRlabmaster.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: 'pacotes=' + encodeURIComponent(JSON.stringify(pacotes))
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data && data.length > 0) {
-                    data.forEach(result => {
-                        if (result.status === 'success') {
-                            alert(result.message);
-                        } else {
-                            alert(result.message);
-                        }
-                    });
-                    pacotes = [];
-                    atualizarListaPacotes();
-                } else {
-                    alert('Erro ao processar os pacotes.');
-                }
-            })
-            .catch(error => {
-                console.error('Erro:', error);
-                alert('Erro ao conectar com o servidor.');
-            });
-        });
+        }
 
         function verificarDuplicidade(codigo) {
             return pacotes.some(pacote => pacote.codigobarras === codigo);
@@ -158,6 +124,51 @@
             pacotes.splice(index, 1);
             atualizarListaPacotes();
         }
+
+        document.getElementById('adicionarPacote').addEventListener('click', adicionarPacote);
+
+        document.getElementById('receberTodos').addEventListener('click', function() {
+            if (pacotes.length === 0) {
+                alert('Nenhum pacote para receber.');
+                return;
+            }
+
+            fetch('processarRlabmaster.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: 'pacotes=' + encodeURIComponent(JSON.stringify(pacotes))
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.length > 0) {
+                    data.forEach(result => {
+                        if (result.status === 'success') {
+                            alert(result.message);
+                        } else {
+                            alert(result.message);
+                        }
+                    });
+                    pacotes = [];
+                    atualizarListaPacotes();
+                } else {
+                    alert('Erro ao processar os pacotes.');
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro ao conectar com o servidor.');
+            });
+        });
+
+        // Adicionar eventos para "Enter" e "Tab" no campo de código de barras
+        document.getElementById('codigobarras').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' || event.key === 'Tab') {
+                event.preventDefault();
+                adicionarPacote();
+            }
+        });
 
         let inactivityTime = function () {
             let time;

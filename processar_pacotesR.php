@@ -21,10 +21,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         if ($digitoverificarp === '=' && ctype_digit($digitoverificaru)) {
             $codigobarras = substr($codigobarras, 1);
-        } elseif ((($digitoverificarp === 'B') || ($digitoverificarp === 'b')) && ctype_digit($digitoverificaru)) {
-            $codigobarras = substr_replace($codigobarras, '0', -2, 1);
-        } elseif (($digitoverificarp === 'A' || $digitoverificarp === 'a') && ($digitoverificaru === 'A' || $digitoverificaru === 'a')) {
-            $codigobarras = substr($codigobarras, 1, -1);
+            $codigobarras = substr_replace($codigobarras, 'B', 0, 1);
+            $doisultimos_digitos = substr($codigobarras, -2);
+            
+        } elseif(strlen($codigobarras) === 15){
+            $codigobarras = substr_replace($codigobarras, 'B', 0, 1);
+            $doisultimos_digitos = substr($codigobarras, -2);
+        }else {
+            if (($digitoverificarp === 'B' || $digitoverificarp === 'b') && ctype_digit($digitoverificaru)) {
+                $codigobarras = substr_replace($codigobarras, '0', -2, 1);
+                $penultimo_digito = substr($codigobarras, -2, 1);
+            } elseif (($digitoverificarp === 'A' || $digitoverificarp === 'a') && ($digitoverificaru === 'A' || $digitoverificaru === 'A')){
+                $codigobarras = substr($codigobarras, 1, -1);
+                $penultimo_digito = substr($codigobarras, -2, 1);
+            }
+            else {
+                if(strlen($codigobarras) === 9){
+                    $doisultimos_digitos = 20; // ID do laboratório LABMASTER
+                }else{
+                    $penultimo_digito = substr($codigobarras, -2, 1);
+                }
+            }
         }
 
         // Verificar se o nome do laboratório do código de barras corresponde ao laboratório selecionado

@@ -11,6 +11,12 @@ $user_id = $_SESSION['user_id'];
 $user_type = $_SESSION['user_type'];
 $user_name = $_SESSION['username'];
 $local_id = $_SESSION['unidade_id'];
+$local_name = $_SESSION['unidade_nome'];
+
+
+$sql = "UPDATE user_sessions SET last_activity = NOW() WHERE user_id = :user_id";
+$stmt = $dbconn->prepare($sql);
+$stmt->execute([':user_id' => $user_id]);
 
 // Definir a consulta SQL com base no tipo de usuário e local
 if ($user_type === 'admin') {
@@ -81,13 +87,14 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <a style="color: #fff;" href="recebimento_LABMASTER.php"><i class="fas fa-vials"></i> Receber Amostras LABMASTER</a>
             <a style="color: #fff;" href="relatorio_pendencias.php"><i class="fas fa-file-invoice"></i> Relatorio de Pendencias</a>
             <a style="color: #fff;" href="lista_pacotes.php"><i class="fas fa-vial"></i> Gerenciar Amostras</a>
+            <a style="color: #fff;" href="recebimento_lab.php"><i class="fas fa-flask"></i> Recebimento por Laboratório</a>
         <?php endif; ?>
 
         <?php if ($_SESSION['user_type'] === 'admin'): ?>
-            <a style="color: #fff;" href="relatorio_pendencias.php"><i class="fas fa-file-invoice"></i> Relatorio de Pendencias</a>
-            <a style="color: #fff;" href="lista_pacotes.php"><i class="fas fa-vial"></i> Gerenciar Amostras</a>
+            <!-- <a style="color: #fff;" href="relatorio_pendencias.php"><i class="fas fa-file-invoice"></i> Relatorio de Pendencias</a> -->
+            <!-- <a style="color: #fff;" href="lista_pacotes.php"><i class="fas fa-vial"></i> Gerenciar Amostras</a> -->
             <a style="color: #fff;" href="cadastro_usuarios.php"><i class="fas fa-user-plus"></i> Cadastrar Usuário</a>
-            <a style="color: #fff;" href="listar.php"><i class="fas fa-users-cog"></i> Gerenciar Usuários</a>
+             <a style="color: #fff;" href="listar.php"><i class="fas fa-users-cog"></i> Gerenciar Usuários</a>
             <a style="color: #fff;" href="cadastrounidade.php"><i class="fas fa-map-marker-alt"></i> Cadastrar Locais</a>
             <a style="color: #fff;" href="gerenciar_locais.php"><i class="fas fa-list"></i> Gerenciar Locais</a>
             <a style="color: #fff;" href="cadastro_lab.php"><i class="fas fa-flask"></i> Cadastrar Laboratório</a>
@@ -99,8 +106,10 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <div class="content">
         <div class="container container-custom"  style="background-color: rgb(38, 168, 147);">
             <h1 class="text-center mb-4" style="color: #fff;">Bem-vindo ao Sistema de Gerenciamento de Envios e Recebimentos de Amostras: <?php echo ucfirst($user_name); ?></h1>
+            <h2 class="text-center mb-4" style="color: #fff;">Seu usuario esta vinculado a unidade: <?php echo ucfirst($local_name); ?></h2>
             <h2 class="text-center mb-4" style="color: #fff;">Você está logado como um Usuário Classe: <?php echo ucfirst($user_type); ?></h2>
         </div>
+        <div class="container container-custom3">
         <h2 class="text-center mb-4"style="color: rgb(38, 168, 147);"><i class="fas fa-vial"></i> Amostras no Local</h2>
         <div class="table-wrapper" style="position: relative;" id="managerTable">
             <table class="table table-bordered table-hover table-striped">
@@ -133,6 +142,8 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         <span class="badge badge-warning">enviado</span>
                                     <?php elseif($pacote['status'] == 'recebido'): ?>
                                         <span class="badge badge-success">recebido</span>
+                                    <?php elseif($pacote['status'] == 'recebidolab'): ?>
+                                        <span  class="badge badge-primary">recebido LAB</span>
                                     <?php endif; ?>
                                 </td>
                                 <td><?php echo htmlspecialchars($pacote['descricao']); ?></td>
@@ -156,6 +167,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <?php endif; ?>
                 </tbody>
             </table>
+        </div>
         </div>
     </div>
     <div class="fixed-bottom toggle-footer cursor_to_down" id="footer_fixed">

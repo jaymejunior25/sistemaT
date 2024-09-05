@@ -22,6 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $laboratorio = $_POST['laboratorio'];
         $data_recebimento = $_POST['data_recebimento'];
         $matricula = $_POST['matricula'];
+        $descricao = $_POST['descricao'];  // Captura a descrição selecionada
         
         // Formatar a data para o formato 'aaaa-mm-dd'
         $data_recebimento = date('Y-m-d', strtotime($data_recebimento));
@@ -36,6 +37,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } else {
             $laboratorio_id = $laboratorio_ids[0];  // Definindo $laboratorio_id para usar posteriormente
 
+            // Adicionar filtro de descrição, se não for 'Todos'
+            $descricao_condition = '';
+            $paramsd ='';
+            if ($descricao != 'all') {
+                $descricao_condition = "AND p.descricao = ?";
+                $paramsd = $descricao;
+            }
+            
             // Buscar amostras do laboratório e data especificados
             $placeholders = implode(',', array_fill(0, count($laboratorio_ids), '?'));
             $stmt = $dbconn->prepare("
@@ -56,9 +65,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 WHERE p.lab_id IN ($placeholders) 
                   AND DATE(p.data_recebimento) = ?
                   AND p.status = 'recebido'
+                  $descricao_condition
             ");
-            
-            $params = array_merge($laboratorio_ids, [$data_recebimento]);
+            if ($descricao != 'all') {
+                $params = array_merge($laboratorio_ids, [$data_recebimento],[$paramsd]);
+            }else{
+                $params = array_merge($laboratorio_ids, [$data_recebimento]);
+            }
+           
             $stmt->execute($params);
             $amostras = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -81,6 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $matricula = $_POST['matricula'];
         $laboratorio = $_POST['laboratorio'];
         $data_recebimento = $_POST['data_recebimento'];
+        $descricao = $_POST['descricao'];  // Captura a descrição selecionada
 
         // Formatar a data para o formato 'aaaa-mm-dd'
         $data_recebimento = date('Y-m-d', strtotime($data_recebimento));
@@ -117,6 +132,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             } else {
                 $laboratorio_id = $laboratorio_ids[0];  // Definindo $laboratorio_id para usar posteriormente
     
+                // Adicionar filtro de descrição, se não for 'Todos'
+                $descricao_condition = '';
+                $paramsd ='';
+                if ($descricao != 'all') {
+                    $descricao_condition = "AND descricao = ?";
+                    $paramsd = $descricao;
+                }
+                
+                
                 // Confirmar o recebimento das amostras
                 $placeholders = implode(',', array_fill(0, count($laboratorio_ids), '?'));
                 $stmt = $dbconn->prepare("
@@ -125,9 +149,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     WHERE lab_id IN ($placeholders) 
                       AND DATE(data_recebimento) = ? 
                       AND status = 'recebido'
+                      $descricao_condition
                 ");
     
-                $params = array_merge([$usuario_info['id']], $laboratorio_ids, [$data_recebimento]);
+                if ($descricao != 'all') {
+                    $params = array_merge([$usuario_info['id']], $laboratorio_ids, [$data_recebimento],[$paramsd]);
+                }else{
+                    $params = array_merge([$usuario_info['id']], $laboratorio_ids, [$data_recebimento]);
+                }
+                
                 $stmt->execute($params);
     
                 if ($stmt->rowCount() > 0) {
@@ -170,6 +200,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <div class="form-group">
                 <label for="data_recebimento">Data de Recebimento:</label>
                 <input type="date" id="data_recebimento" name="data_recebimento" class="form-control" value="<?php echo date('Y-m-d'); ?>" required>
+            </div>
+            <div class="form-group">
+                <label for="descricao">Descrição:</label>
+                <select name="descricao" id="descricao" class="form-control">
+                    <option value="all">Todos</option>
+                    <option value="1° ENVIO">1° ENVIO</option>
+                    <option value="2° ENVIO">2° ENVIO</option>
+                    <option value="3° ENVIO">3° ENVIO</option>
+                    <option value="4° ENVIO">4° ENVIO</option>
+                </select>
             </div>
             <div class="form-group">
                 <label for="matricula">Matrícula do Funcionário:</label>
@@ -242,6 +282,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <input type="hidden" name="laboratorio" value="<?php echo htmlspecialchars($laboratorio); ?>">
             <input type="hidden" name="data_recebimento" value="<?php echo htmlspecialchars($data_recebimento); ?>">
             <input type="hidden" name="matricula" value="<?php echo htmlspecialchars($matricula); ?>">
+            <input type="hidden" name="descricao" value="<?php echo htmlspecialchars($descricao); ?>">
+  
   
                 <!-- <div class="form-group">
                     <label for="matricula">Matrícula do Funcionário:</label>

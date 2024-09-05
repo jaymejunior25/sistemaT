@@ -118,9 +118,14 @@ $stmt = $dbconn->prepare($sql);
 $stmt->execute($params);
 $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+if ($pacotes) {
+    // Pegue a descrição do primeiro pacote
+    $descricao_primeiro_pacote = $pacotes[0]['descricao'];
+} else {
+    // Caso não haja pacotes, definir a descrição como null
+    $descricao_primeiro_pacote = null;
+}
 
-// Pegue a descrição do primeiro pacote
-$descricao_primeiro_pacote = $pacotes[0]['descricao'];
 
 
 // Calcular o total de pacotes

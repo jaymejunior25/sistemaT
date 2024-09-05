@@ -7,6 +7,11 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
+$user_id = $_SESSION['user_id'];
+$sql = "UPDATE user_sessions SET last_activity = NOW() WHERE user_id = :user_id";
+$stmt = $dbconn->prepare($sql);
+$stmt->execute([':user_id' => $user_id]);
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $pacotes = json_decode($_POST['pacotes'], true);
 
@@ -21,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $codigobarras = $pacote['codigobarras'];
 
         // Verificar se o código de barras e descrição já foram enviados hoje
-        $stmt = $dbconn->prepare("SELECT * FROM pacotes WHERE codigobarras = :codigobarras OR (unidade_cadastro_id = :unidade_cadastro_id and descricao = :descricao AND DATE(data_cadastro) = CURRENT_DATE) and status = 'enviado' ");
+        $stmt = $dbconn->prepare("SELECT * FROM pacotes WHERE codigobarras = :codigobarras OR (unidade_cadastro_id = :unidade_cadastro_id and descricao = :descricao AND DATE(data_cadastro) = CURRENT_DATE) and (status = 'enviado' or status = 'recebido' or status = 'recebidolab') ");
         $stmt->execute([':codigobarras' => $codigobarras,':unidade_cadastro_id'=> $local_id, ':descricao' => $descricao]);
         $pacote_existente_enviado = $stmt->fetch(PDO::FETCH_ASSOC);
 

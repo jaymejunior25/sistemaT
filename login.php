@@ -24,8 +24,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $_SESSION['username'] = $user['usuario'];
         $_SESSION['user_type'] = $user['tipoconta'];
         //$_SESSION['unidade_id'] = $user['unidade_id'];
+        
         //$_SESSION['unidade_nome'] = $local['nome'];
         //$_SESSION['success_message'] = 'Login com Sucesso.';
+        // Inserir nova sessão
+        $sql = "INSERT INTO user_sessions (user_id) VALUES (:user_id)";
+        $stmt = $dbconn->prepare($sql);
+        $stmt->execute([':user_id' => $user['id']]);
         header('Location: selecionar_local.php');
         exit();
     } else {

@@ -99,6 +99,8 @@
 
                 if (duplicado) {
                     alert('Pacote com código de barras ' + codigobarrasFiltrado + ' já existe na lista.');
+                    document.getElementById('codigobarras').value = ''; // Limpa o campo de código de barras
+                    document.getElementById('codigobarras').focus(); // Mantém o foco no campo de código de barras
                     return;
                 }
                 // Verificação se algum código de barras na lista contém o código informado
@@ -106,6 +108,8 @@
 
                 if (codigoContido) {
                     alert('O código de barras ' + codigobarrasFiltrado + ' contém um código já existente na lista.');
+                    document.getElementById('codigobarras').value = ''; // Limpa o campo de código de barras
+                    document.getElementById('codigobarras').focus(); // Mantém o foco no campo de código de barras
                     return;
                 }
 
@@ -121,8 +125,12 @@
                 .then(data => {
                     if (data.status === 'exists') {
                         alert('Pacote com código de barras ' + codigobarrasFiltrado + ' já existe no banco de dados.');
+                        document.getElementById('codigobarras').value = ''; // Limpa o campo de código de barras
+                        document.getElementById('codigobarras').focus(); // Mantém o foco no campo de código de barras
                     } else if (data.status === 'lab_nexiste'){
                         alert('Pacote com código de barras ' + codigobarrasFiltrado + ' não é de nenhum laboratorio cadastrado no sistema.');
+                        document.getElementById('codigobarras').value = ''; // Limpa o campo de código de barras
+                        document.getElementById('codigobarras').focus(); // Mantém o foco no campo de código de barras
                     } else {
                         pacotes.push({ descricao, codigobarras, codigobarrasFiltrado });
                         atualizarListaPacotes();

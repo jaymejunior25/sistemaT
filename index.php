@@ -12,6 +12,12 @@ $user_type = $_SESSION['user_type'];
 $user_name = $_SESSION['username'];
 $local_id = $_SESSION['unidade_id'];
 $local_name = $_SESSION['unidade_nome'];
+
+
+$sql = "UPDATE user_sessions SET last_activity = NOW() WHERE user_id = :user_id";
+$stmt = $dbconn->prepare($sql);
+$stmt->execute([':user_id' => $user_id]);
+
 // Definir a consulta SQL com base no tipo de usuário e local
 if ($user_type === 'admin') {
     $query = "SELECT p.*, l_envio.nome AS envio_nome, l_lab.nome AS lab_nome, u_envio.usuario AS enviado_por, u_recebimento.usuario AS recebido_por, u_cadastro.usuario AS cadastrado_por, l_cadastro.nome AS cadastro_nome 

@@ -119,7 +119,8 @@
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded'
                     },
-                    body: 'codigobarras=' + encodeURIComponent(codigobarrasFiltrado)
+                    body: 'descricao=' + encodeURIComponent(descricao) + '&codigobarras=' + encodeURIComponent(codigobarrasFiltrado)
+                            
                 })
                 .then(response => response.json())
                 .then(data => {
@@ -131,7 +132,11 @@
                         alert('Pacote com código de barras ' + codigobarrasFiltrado + ' não é de nenhum laboratorio cadastrado no sistema.');
                         document.getElementById('codigobarras').value = ''; // Limpa o campo de código de barras
                         document.getElementById('codigobarras').focus(); // Mantém o foco no campo de código de barras
-                    } else {
+                    } else if (data.status === 'desc_exists') {
+                        alert('O ' + descricao + ' desta unidade já foi concluido! Por favor, tente utilza o proximo envio.');
+                        document.getElementById('codigobarras').value = ''; // Limpa o campo de código de barras
+                        document.getElementById('codigobarras').focus(); // Mantém o foco no campo de código de barras
+                    }else{
                         pacotes.push({ descricao, codigobarras, codigobarrasFiltrado });
                         atualizarListaPacotes();
                         document.getElementById('codigobarras').value = '';

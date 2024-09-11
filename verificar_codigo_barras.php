@@ -4,10 +4,14 @@ include 'db.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $codigobarras = $_POST['codigobarras'];
+    $descricao = $_POST['descricao'];
 
     $stmt = $dbconn->prepare("SELECT * FROM pacotes WHERE codigobarras = :codigobarras");
     $stmt->execute([':codigobarras' => $codigobarras]);
     $pacote_existente = $stmt->fetch(PDO::FETCH_ASSOC);
+
+
+    $local_id = $_SESSION['unidade_id'];
 
           // Separa o primeiro e o último dígito do código de barras
           $digitoverificarp = substr($codigobarras, 0, 1);
@@ -50,12 +54,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
               $stmt = $dbconn->prepare("SELECT * FROM laboratorio WHERE digito = :digito");
               $stmt->execute([':digito' => $digito_a_utilizar]);
               $lab = $stmt->fetch(PDO::FETCH_ASSOC);
-              
+
+                 // Verificar se o código de barras e descrição já foram enviados hoje
+                $stmt = $dbconn->prepare("SELECT * FROM pacotes WHERE codigobarras = :codigobarras OR (unidade_cadastro_id = :unidade_cadastro_id and descricao = :descricao AND DATE(data_cadastro) = CURRENT_DATE) and (status = 'enviado' or status = 'recebido' or status = 'recebidolab') ");
+                $stmt->execute([':codigobarras' => $codigobarras,':unidade_cadastro_id'=> $local_id, ':descricao' => $descricao]);
+                $pacote_existente_enviado = $stmt->fetch(PDO::FETCH_ASSOC);
+
         if ($lab) {
             if ($pacote_existente) {
                 echo json_encode(['status' => 'exists']);
             } else {
-                echo json_encode(['status' => 'not_exists']);
+                if($pacote_existente_enviado){
+                    echo json_encode(['status' => 'desc_exists']);
+                }else{
+                    echo json_encode(['status' => 'not_exists']);
+                }
             }
         }else{
             echo json_encode(['status' => 'lab_nexiste']);

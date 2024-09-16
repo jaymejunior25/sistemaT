@@ -1,0 +1,17 @@
+select cdamostra from coleta
+where dtcoleta = current_date
+and hrtermcoleta is not null
+and cdentjurcoleta = '1'
+and cdentjurloccoleta = '6'
+
+
+select cdamostra from coleta
+where dtcoleta = current_date
+and hrtermcoleta is not null
+and cdentjurloccoleta = :codigolocal
+
+
+codigolocal = nome local do usuario 
+4 = castanheira 
+5 = coleta externa
+6 = metropole

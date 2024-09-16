@@ -126,7 +126,22 @@ if ($pacotes) {
     $descricao_primeiro_pacote = null;
 }
 
+// Agrupa os pacotes pelos 13 primeiros dígitos do código de barras
+$pacoteAgrupado = [];
 
+foreach ($pacotes as $pacote) {
+    $prefixoCodigoBarras = substr($pacote['codigobarras'], 0, 13); // Pega os 13 primeiros dígitos
+
+    if (!isset($pacoteAgrupado[$prefixoCodigoBarras])) {
+        $pacoteAgrupado[$prefixoCodigoBarras] = [
+            'prefixo' => $prefixoCodigoBarras,
+            'count' => 0,
+            'pacotes' => []
+        ];
+    }
+    $pacoteAgrupado[$prefixoCodigoBarras]['pacotes'][] = $pacote;
+    $pacoteAgrupado[$prefixoCodigoBarras]['count']++;
+}
 
 // Calcular o total de pacotes
 $totalPacotes = count($pacotes);
@@ -269,18 +284,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_password']) &&
                 <label for="pacotes">Pacotes Cadastrados:</label>
                 <div class="table-responsive">
                     <table class="table table-bordered table-hover table-striped">
-                        <thead class="theadfixed">
+                        <?php foreach ($pacoteAgrupado as $grupo): ?>
                             <tr>
-                                <th>Descrição</th>
-                                <th>Código de Barras</th>
-                                <th>Laboratório</th>
-                                <th>Data de Cadastro</th>
-                                <th>Cadastrado por</th>
-                                <th>Local de Cadastro</th>
+                                <td colspan="6" style="background-color: rgb(38, 168, 147); color: aliceblue;">
+                                    Prefixo: <?php echo htmlspecialchars($grupo['prefixo']); ?> (Total: <?php echo $grupo['count']; ?> Amostras)
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($pacotes as $pacote): ?>
+                        
+                            <?php foreach ($grupo['pacotes'] as $pacote): ?>
                                 <tr>
                                     <td><?php echo htmlspecialchars($pacote['descricao']); ?></td>
                                     <td><?php echo htmlspecialchars($pacote['codigobarras']); ?></td>
@@ -290,6 +301,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_password']) &&
                                     <td><?php echo htmlspecialchars($pacote['cadastro_nome']); ?></td>
                                 </tr>
                             <?php endforeach; ?>
+                        <?php endforeach; ?>
                         </tbody>
                     </table>
                 </div>

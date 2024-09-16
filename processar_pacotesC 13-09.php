@@ -13,82 +13,14 @@ $sql = "UPDATE user_sessions SET last_activity = NOW() WHERE user_id = :user_id"
 $stmt = $dbconn->prepare($sql);
 $stmt->execute([':user_id' => $user_id]);
 
-// Função para verificar prefixos e adicionar amostras ao agrupamento
-function buscarPrefixosEAdicionarAoAgrupamento($dbconn1, $local_id, &$agrupamentos, &$mensagens) {
-    // Mapeamento do código de local
-    $codigolocal_map = [
-        'Castanheira' => 4,
-        'Coleta Externa' => 5,
-        'Metropole' => 6
-    ];
-    
-    if (!isset($codigolocal_map[$local_id])) {
-        $mensagens[] = "Local não reconhecido.";
-        return;
-    }
-
-    $codigolocal = $codigolocal_map[$local_id];
-
-    // Consulta no novo banco para buscar amostras da data atual com base no local
-    $sql = "SELECT cdamostra FROM coleta WHERE dtcoleta = current_date AND hrtermcoleta IS NOT NULL AND cdentjurloccoleta = :codigolocal";
-    $stmt = $dbconn1->prepare($sql);
-    $stmt->execute([':codigolocal' => $codigolocal]);
-
-    $amostras = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    // Adicionar amostras nos agrupamentos com base no prefixo
-    foreach ($amostras as $amostra) {
-        $prefixo = substr($amostra['cdamostra'], 0, 13); // Considera os 3 primeiros caracteres como prefixo
-
-        if (!isset($agrupamentos[$prefixo])) {
-            $agrupamentos[$prefixo] = ['amostras' => [], 'max_amostras' => 5];
-        }
-
-        if (count($agrupamentos[$prefixo]['amostras']) < $agrupamentos[$prefixo]['max_amostras']) {
-            $agrupamentos[$prefixo]['amostras'][] = $amostra['cdamostra'];
-        }
-    }
-}
-
-// Função para verificar amostras no banco existente e adicionar ao agrupamento
-function verificarEAdicionarAmostrasExistentes($dbconn, &$agrupamentos, &$mensagens) {
-    // Consulta no banco existente para verificar amostras já cadastradas
-    $sql = "SELECT codigobarras FROM pacotes WHERE DATE(data_cadastro) = CURRENT_DATE";
-    $stmt = $dbconn->prepare($sql);
-    $stmt->execute();
-
-    $amostras_existentes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    foreach ($amostras_existentes as $amostra) {
-        $prefixo = substr($amostra['codigobarras'], 0, 13); // Considera os 3 primeiros caracteres como prefixo
-
-        if (!isset($agrupamentos[$prefixo])) {
-            $agrupamentos[$prefixo] = ['amostras' => [], 'max_amostras' => 5];
-        }
-
-        if (count($agrupamentos[$prefixo]['amostras']) < $agrupamentos[$prefixo]['max_amostras']) {
-            $agrupamentos[$prefixo]['amostras'][] = $amostra['codigobarras'];
-        }
-    }
-}
-
-
-
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $pacotes = json_decode($_POST['pacotes'], true);
 
     $usuario_cadastro_id = $_SESSION['user_id'];
     $local_id = $_SESSION['unidade_id'];
 
-    $agrupamentos = []; // Armazenar os agrupamentos por prefixo
     $ids_laboratorios = [];
     $messages = [];
-
-    // Buscar prefixos e adicionar amostras ao agrupamento
-    buscarPrefixosEAdicionarAoAgrupamento($dbconn1, $local_id, $agrupamentos, $mensagens);
-
-    // Verificar amostras existentes e adicionar ao agrupamento
-    verificarEAdicionarAmostrasExistentes($dbconn, $agrupamentos, $mensagens);
 
     foreach ($pacotes as $pacote) {
         $descricao = $pacote['descricao'];
@@ -100,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $pacote_existente_enviado = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($pacote_existente_enviado) {
-            $messages[] =  'O ' . $descricao . 'desta unidade já foi concluido! Por favor, tente utilza o proximo envio.';
+            $messages[] =  'O' . $descricao . 'desta unidade já foi concluido! Por favor, tente utilza o proximo envio.';
             continue;
         }
 
@@ -179,32 +111,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $lab = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($lab) {
-                    // Verificar agrupamento correspondente pelo prefixo
-                    $prefixo = substr($codigobarras, 0, 13);
-                    if (isset($agrupamentos[$prefixo])) {
-                        $total_amostras_agrupamento = count($agrupamentos[$prefixo]['amostras']);
-
-                        if ($total_amostras_agrupamento < $agrupamentos[$prefixo]['max_amostras']) {
-                            // Adicionar a amostra ao agrupamento
-                            $agrupamentos[$prefixo]['amostras'][] = $codigobarras;
-                            $total_amostras_restantes = $agrupamentos[$prefixo]['max_amostras'] - $total_amostras_agrupamento - 1;
-                            $mensagens[] = "Amostra adicionada ao agrupamento $prefixo. Faltam $total_amostras_restantes amostras.";
-                        } else {
-                            $mensagens[] = "Agrupamento $prefixo já está completo.";
-                        }
-                    } else {
-                        $laboratorio_id = $lab['id'];
-                        $ids_laboratorios[] = $laboratorio_id;
-                        // Inserir o novo pacote no banco de dados
-                        $stmt = $dbconn->prepare("INSERT INTO pacotes (descricao, codigobarras, usuario_cadastro_id, unidade_cadastro_id, data_cadastro, lab_id) VALUES (:descricao, :codigobarras, :usuario_cadastro_id, :unidade_cadastro_id, NOW(), :lab_id)");
-                        $stmt->execute([
-                            ':descricao' => $descricao,
-                            ':codigobarras' => $codigobarras,
-                            ':usuario_cadastro_id' => $usuario_cadastro_id,
-                            ':unidade_cadastro_id' => $local_id,
-                            ':lab_id' => $laboratorio_id
-                        ]);
-                    }
+                $laboratorio_id = $lab['id'];
+                $ids_laboratorios[] = $laboratorio_id;
+                // Inserir o novo pacote no banco de dados
+                $stmt = $dbconn->prepare("INSERT INTO pacotes (descricao, codigobarras, usuario_cadastro_id, unidade_cadastro_id, data_cadastro, lab_id) VALUES (:descricao, :codigobarras, :usuario_cadastro_id, :unidade_cadastro_id, NOW(), :lab_id)");
+                $stmt->execute([
+                    ':descricao' => $descricao,
+                    ':codigobarras' => $codigobarras,
+                    ':usuario_cadastro_id' => $usuario_cadastro_id,
+                    ':unidade_cadastro_id' => $local_id,
+                    ':lab_id' => $laboratorio_id
+                ]);
             }else{
                 $messages[] = 'Pacote com código de barras ' . $codigobarras . ' não é de nenhum laboratorio cadastrado no sistema.';
                 continue;

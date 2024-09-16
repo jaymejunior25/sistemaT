@@ -67,7 +67,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 if($pacote_existente_enviado){
                     echo json_encode(['status' => 'desc_exists']);
                 }else{
-                    echo json_encode(['status' => 'not_exists']);
+                        if(strlen($codigobarras)>17){
+                            echo json_encode(['status' => 'tamanho']);
+                        }else{
+                            echo json_encode(['status' => 'not_exists']);
+                        }
                 }
             }
         }else{

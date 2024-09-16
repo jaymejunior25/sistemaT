@@ -234,13 +234,6 @@
                     `;
                     lista.appendChild(item);
                 });
-                // Aviso se ainda faltam amostras para completar o agrupamento de 4 ou 5 amostras
-                if (grupoPacotes.length < 4) {
-                    const aviso = document.createElement('div');
-                    aviso.className = 'alert alert-warning';
-                    aviso.textContent = `Faltam pelo menos ${4 - grupoPacotes.length} ou ${5 - grupoPacotes.length} amostras para completar o total desta coleta.`;
-                    lista.appendChild(aviso);
-                }
             }
         }
 

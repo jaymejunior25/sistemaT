@@ -67,7 +67,7 @@ $sql = "SELECT codigobarras, descricao FROM pacotes WHERE DATE(data_cadastro) = 
 
     $amostras_existentes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    foreach ($amostras_existentes as $amostra) 
+    foreach ($amostras_existentes as $amostra) {
         $codigobarras = $amostra['codigobarras']; 
         $descricao = $amostra['descricao'];  
 
@@ -76,7 +76,7 @@ $sql = "SELECT codigobarras, descricao FROM pacotes WHERE DATE(data_cadastro) = 
         } elseif (strlen($codigobarras) === 12) {
             $prefixo = substr($codigobarras, 0, 10); 
         } elseif (strlen($codigobarras) === 17) {
-            $prefixo = substr($codigobarras, 5, 10);
+            $prefixo = substr($codigobarras, 5, 15);
         } else {
             $prefixo = $codigobarras; 
         }
@@ -100,21 +100,8 @@ $sql = "SELECT codigobarras, descricao FROM pacotes WHERE DATE(data_cadastro) = 
         // $agrupamentos[$prefixo]['Total'] += 1;  // Incrementa corretamente o campo 'Total'
 
     }
-
-    // Contagem de amostras carregadas do banco de dados
-$totalAmostrasDB = 0;
-foreach ($agrupamentos as $grupo) {
-    foreach ($grupo['amostras'] as $amostra) {
-        if (isset($amostra['isFromDB']) && $amostra['isFromDB']) {
-            $totalAmostrasDB++;
-        }
-    }
-}
 // Preparar os agrupamentos para renderização no frontend
-echo "<script>
-        var agrupamentos = " . json_encode($agrupamentos) . ";
-        var totalAmostrasDB = " . json_encode($totalAmostrasDB) . ";
-      </script>";
+echo "<script>var agrupamentos = " . json_encode($agrupamentos) . ";</script>";
 
 
 ?>
@@ -151,8 +138,7 @@ echo "<script>
             <button type="button" id="adicionarPacote" class="btn btn-primary btn-block mt-3"><i class="fas fa-plus"></i> Adicionar Pacote</button>
         </form>
         <div class="mt-3">
-        <h4 id="totalPacotes" class="text-center"></h4> <!-- Total de Novas Amostras -->
-        <h4 id="totalAmostrasDB" class="text-center"></h4> <!-- Total de Amostras do Banco -->
+            <h4 id="totalPacotes" class="text-center"></h4> <!-- Total de Pacotes -->
         </div>
         <div id="pacotesList" class="mt-3"></div>
         <button type="button" id="cadastrarTodos" class="btn btn-success btn-block mt-3"><i class="fas fa-check"></i> Cadastrar Todos</button>
@@ -220,7 +206,7 @@ echo "<script>
             const codigobarras = document.getElementById('codigobarras').value;
 
             if (descricao && codigobarras) {
-                const codigobarrasFiltrado = filtrarCodigoBarras(codigobarras); 
+                const codigobarrasFiltrado = filtrarCodigoBarras(codigobarras);
 
                  // Verificação de duplicidade na lista dinâmica
                 // let duplicado = pacotes.some(pacote => pacote.codigobarrasFiltrado === codigobarrasFiltrado);
@@ -388,12 +374,11 @@ echo "<script>
         function atualizarListaPacotes() {
             // const lista = document.getElementById('pacotesList');
             const totalPacotes = document.getElementById('totalPacotes');
-            const totalAmostrasDBElement = document.getElementById('totalAmostrasDB');
             pacotesList.innerHTML = '';
 
             // Atualizar o total de pacotes
-            totalPacotes.textContent = `Total de Amostras Novas: ${pacotes.length}`;
-            totalAmostrasDBElement.textContent = `Total de Amostras Carregadas do Banco: ${totalAmostrasDB}`;
+            totalPacotes.textContent = `Total de Amostras: ${pacotes.length}`;
+
             // Agrupar pacotes pelos 13 primeiros dígitos do código de barras
             // let grupos = agrupamentos;  // Começa com os agrupamentos já carregados do banco
 

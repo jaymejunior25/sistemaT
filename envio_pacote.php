@@ -130,8 +130,16 @@ if ($pacotes) {
 $pacoteAgrupado = [];
 
 foreach ($pacotes as $pacote) {
-    $prefixoCodigoBarras = substr($pacote['codigobarras'], 0, 13); // Pega os 13 primeiros dígitos
-
+    // $prefixoCodigoBarras = substr($pacote['codigobarras'], 0, 13); // Pega os 13 primeiros dígitos
+    if (strlen($pacote['codigobarras']) === 15) {
+        $prefixoCodigoBarras = substr($pacote['codigobarras'], 0, 13);
+    } elseif (strlen($pacote['codigobarras']) === 12) {
+        $prefixoCodigoBarras = substr($pacote['codigobarras'], 0, 10); 
+    } elseif (strlen($pacote['codigobarras']) === 17) {
+        $prefixoCodigoBarras = substr($pacote['codigobarras'], 5, 10);
+    } else {
+        $prefixoCodigoBarras = $pacote['codigobarras']; 
+    }
     if (!isset($pacoteAgrupado[$prefixoCodigoBarras])) {
         $pacoteAgrupado[$prefixoCodigoBarras] = [
             'prefixo' => $prefixoCodigoBarras,

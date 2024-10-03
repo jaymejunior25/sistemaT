@@ -12,8 +12,6 @@ $agrupamentos = []; // Armazenar os agrupamentos por prefixo
 
 // Mapeamento do código de local
 $local_id = $_SESSION['unidade_nome'];
-$local_idC = $_SESSION['unidade_id'];
-
 $codigolocal_map = [
     'Castanheira' => 4,
     'Coleta Externa' => 5,
@@ -48,73 +46,46 @@ foreach ($amostrasSBS as $amostra) {
     $prefixo = $amostra['cdamostra'];
 
     if (!isset($agrupamentos[$prefixo])) {
-        $agrupamentos[$prefixo] = ['amostras' => [], 'max_amostras' => 5, 'faltantes' => 5];
+        $agrupamentos[$prefixo] = ['amostras' => [], 'max_amostras' => 6];
     }
 
     // if (count($agrupamentos[$prefixo]['amostras']) < $agrupamentos[$prefixo]['max_amostras']) {
     //     $agrupamentos[$prefixo]['amostras'][] = $prefixo;
     // }
-
-     // Adiciona a amostra no agrupamento e atualiza o número de amostras faltantes
-    //  $agrupamentos[$prefixo]['amostras'][] = $prefixo;
-    //$agrupamentos[$prefixo]['faltantes'] = $agrupamentos[$prefixo]['max_amostras'] - count($agrupamentos[$prefixo]['amostras']);
- 
 }
 
-$sql = "SELECT codigobarras, descricao FROM pacotes WHERE DATE(data_cadastro) = current_date and unidade_cadastro_id = :unidade_cadastro_id ";
+$sql = "SELECT codigobarras FROM pacotes WHERE DATE(data_cadastro) = NOW()";
     $stmt = $dbconn->prepare($sql);
-    $stmt->execute([':unidade_cadastro_id' => $local_idC]);
+    $stmt->execute();
 
     $amostras_existentes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    foreach ($amostras_existentes as $amostra) 
-        $codigobarras = $amostra['codigobarras']; 
-        $descricao = $amostra['descricao'];  
-
-        if (strlen($codigobarras) === 15) {
-            $prefixo = substr($codigobarras, 0, 13);
-        } elseif (strlen($codigobarras) === 12) {
-            $prefixo = substr($codigobarras, 0, 10); 
-        } elseif (strlen($codigobarras) === 17) {
-            $prefixo = substr($codigobarras, 5, 10);
-        } else {
-            $prefixo = $codigobarras; 
-        }
-        // Exibe o prefixo atual para depuração
-        // echo "<pre>Prefixo: " . htmlspecialchars($prefixo) . " | Código de Barras: " . htmlspecialchars($codigobarras) . " | Descrição: " . htmlspecialchars($descricao) . "</pre>";
-
-
-        // Verifica se o prefixo já existe no agrupamento
-        if (!isset($agrupamentos[$prefixo])) {
-            $agrupamentos[$prefixo] = ['amostras' => [], 'max_amostras' => 5, 'Total' => 0];
-        }
-
-        // Adiciona o código de barras e a descrição ao agrupamento
-        $agrupamentos[$prefixo]['amostras'][] = [
-            'codigobarras' => $codigobarras,
-            'descricao' => $descricao,
-            'isFromDB' => true  // Indicador de que veio do banco
-        ];
-
-        // Incrementa o total de amostras no agrupamento
-        // $agrupamentos[$prefixo]['Total'] += 1;  // Incrementa corretamente o campo 'Total'
-
+foreach ($amostras_existentes as $amostra) {
+    if (strlen($amostra['codigobarras']) === 15) {
+        // Se o código de barras tiver 15 dígitos, pegar os 13 primeiros dígitos
+        $prefixo = substr($amostra['codigobarras'], 0, 13); // Considera os 13 primeiros caracteres como prefixo
+    } elseif (strlen($amostra['codigobarras']) === 12) {
+        // Se o código de barras tiver 12 dígitos, pegar os 10 primeiros dígitos
+        $prefixo = substr($amostra['codigobarras'], 0, 10); // Considera os 3 primeiros caracteres como prefixo
+    } elseif (strlen($amostra['codigobarras']) === 17) {
+        // Se o código de barras tiver 17 dígitos, pegar do 6º ao 15º dígito
+        $prefixo = substr($amostra['codigobarras'], 5, 15);
+    } else {
+        // Caso o código de barras não tenha um número de dígitos esperado
+        $prefixo = $amostra['codigobarras']; // Considera os 3 primeiros caracteres como prefixo
     }
 
-    // Contagem de amostras carregadas do banco de dados
-$totalAmostrasDB = 0;
-foreach ($agrupamentos as $grupo) {
-    foreach ($grupo['amostras'] as $amostra) {
-        if (isset($amostra['isFromDB']) && $amostra['isFromDB']) {
-            $totalAmostrasDB++;
-        }
+    if (!isset($agrupamentos[$prefixo])) {
+        $agrupamentos[$prefixo] = ['amostras' => [], 'max_amostras' => 6];
     }
+
+    if (count($agrupamentos[$prefixo]['amostras']) < $agrupamentos[$prefixo]['max_amostras']) {
+        $agrupamentos[$prefixo]['amostras'][] =$amostra['codigobarras'];
+    }
+
 }
 // Preparar os agrupamentos para renderização no frontend
-echo "<script>
-        var agrupamentos = " . json_encode($agrupamentos) . ";
-        var totalAmostrasDB = " . json_encode($totalAmostrasDB) . ";
-      </script>";
+echo "<script>var agrupamentos = " . json_encode($agrupamentos) . ";</script>";
 
 
 ?>
@@ -128,12 +99,10 @@ echo "<script>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="styles.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
-    
 </head>
 <body>
     <div class="container container-customlistas">
         <h1 class="text-center mb-4" style="color: #28a745;">Cadastrar Amostra</h1>
-        <h2 class="text-center mb-4" style="color: #28a745;">Seu usuario esta vinculado a unidade: <?php echo ucfirst($local_id); ?></h2>
         <form id="pacoteForm">
         <div class="form-group">
             <label for="descricao" style="color: #28a745;">Descrição:</label>
@@ -151,8 +120,7 @@ echo "<script>
             <button type="button" id="adicionarPacote" class="btn btn-primary btn-block mt-3"><i class="fas fa-plus"></i> Adicionar Pacote</button>
         </form>
         <div class="mt-3">
-        <h4 id="totalPacotes" class="text-center"></h4> <!-- Total de Novas Amostras -->
-        <h4 id="totalAmostrasDB" class="text-center"></h4> <!-- Total de Amostras do Banco -->
+            <h4 id="totalPacotes" class="text-center"></h4> <!-- Total de Pacotes -->
         </div>
         <div id="pacotesList" class="mt-3"></div>
         <button type="button" id="cadastrarTodos" class="btn btn-success btn-block mt-3"><i class="fas fa-check"></i> Cadastrar Todos</button>
@@ -177,9 +145,6 @@ echo "<script>
     <script>
         let pacotes = [];
         let addingPackage = false;
-        // Faz uma cópia do objeto `agrupamentos` carregado do banco de dados
-        let grupos = JSON.parse(JSON.stringify(agrupamentos));  // Cópia profunda para evitar modificar `agrupamentos` diretamente
-
 
         function filtrarCodigoBarras(codigoBarras) {
             let digitoverificarp = codigoBarras.charAt(0);
@@ -220,16 +185,10 @@ echo "<script>
             const codigobarras = document.getElementById('codigobarras').value;
 
             if (descricao && codigobarras) {
-                const codigobarrasFiltrado = filtrarCodigoBarras(codigobarras); 
+                const codigobarrasFiltrado = filtrarCodigoBarras(codigobarras);
 
-                 // Verificação de duplicidade na lista dinâmica
-                // let duplicado = pacotes.some(pacote => pacote.codigobarrasFiltrado === codigobarrasFiltrado);
-
-                // Verificação de duplicidade
-                let duplicado = pacotes.some(pacote => pacote.codigobarrasFiltrado === codigobarrasFiltrado) ||
-                Object.values(grupos).some(grupo => grupo.amostras.some(amostra => amostra.codigobarras === codigobarrasFiltrado));
-
-
+                // Verificação de duplicidade na lista dinâmica
+                let duplicado = pacotes.some(pacote => pacote.codigobarrasFiltrado === codigobarrasFiltrado);
 
                 if (duplicado) {
                     alert('Pacote com código de barras ' + codigobarrasFiltrado + ' já existe na lista.');
@@ -349,71 +308,58 @@ echo "<script>
         const pacotesList = document.getElementById('pacotesList');
         
         document.addEventListener('DOMContentLoaded', function() {
-            pacotesList.innerHTML = ''; // Limpa a lista atual
             // Verifica se os agrupamentos foram passados para o JavaScript
-            // Exibe os agrupamentos já carregados
-            for (const prefixo in agrupamentos) {
-                let grupo = agrupamentos[prefixo];
-                let divGrupo = document.createElement('div');
-                divGrupo.classList.add('agrupamento');
+            if (typeof agrupamentos !== 'undefined') {
+                // let pacotesList = document.getElementById('pacotesList');
+                pacotesList.innerHTML = ''; // Limpa a lista atual
 
-                // Cria o título do agrupamento
-                const tituloGrupo = document.createElement('h5');
-                tituloGrupo.className = 'alert alert-info';
-                tituloGrupo.textContent = `Prefixo: ${prefixo} - Total: ${grupo.amostras.length} amostras`;
-                divGrupo.appendChild(tituloGrupo);
+                // Para cada agrupamento, exibe as amostras
+                for (const prefixo in agrupamentos) {
+                    let grupo = agrupamentos[prefixo];
+                    let divGrupo = document.createElement('div');
+                    divGrupo.classList.add('agrupamento');
 
-                // Cria a lista de amostras
-                let ul = document.createElement('ul');
-                grupo.amostras.forEach(function(amostra) {
-                    let li = document.createElement('li');
-                    li.innerText = amostra;
-                    ul.appendChild(li);
-                });
+                    // Cria o título do agrupamento
+                    const tituloGrupo = document.createElement('h5');
+                    tituloGrupo.className = 'alert alert-info';
+                    // tituloGrupo.textContent = `Prefixo: ${prefixo} (Faltam pelo menos ${grupo.max_amostras - grupo.amostras.length} amostras para completar)`;
+                    tituloGrupo.textContent = `Prefixo: ${prefixo} - Total: ${grupo.amostras.length} amostras`;
+                    divGrupo.appendChild(tituloGrupo);
 
-                divGrupo.appendChild(ul);
-                // Exibir aviso se ainda faltam amostras para completar o agrupamento
-                if (grupo.faltantes > 0) {
-                            const aviso = document.createElement('div');
-                            aviso.className = 'alert alert-warning';
-                            aviso.textContent = `Faltam ${grupo.faltantes} amostras para completar este agrupamento.`;
-                            divGrupo.appendChild(aviso);
+                    // Cria a lista de amostras
+                    let ul = document.createElement('ul');
+                    grupo.amostras.forEach(function(amostra) {
+                        let li = document.createElement('li');
+                        li.innerText = amostra;
+                        ul.appendChild(li);
+                    });
+
+                    divGrupo.appendChild(ul);
+                    pacotesList.appendChild(divGrupo);
                 }
-
-                pacotesList.appendChild(divGrupo);
-                atualizarListaPacotes();
             }
         });
         
         function atualizarListaPacotes() {
             // const lista = document.getElementById('pacotesList');
             const totalPacotes = document.getElementById('totalPacotes');
-            const totalAmostrasDBElement = document.getElementById('totalAmostrasDB');
             pacotesList.innerHTML = '';
 
             // Atualizar o total de pacotes
-            totalPacotes.textContent = `Total de Amostras Novas: ${pacotes.length}`;
-            totalAmostrasDBElement.textContent = `Total de Amostras Carregadas do Banco: ${totalAmostrasDB}`;
+            totalPacotes.textContent = `Total de Amostras: ${pacotes.length}`;
+
             // Agrupar pacotes pelos 13 primeiros dígitos do código de barras
-            // let grupos = agrupamentos;  // Começa com os agrupamentos já carregados do banco
+            let grupos = {};
 
             pacotes.forEach(pacote => {
                 
                 const prefixoDigitos = filtrarCodigoBarrasA(pacote.codigobarrasFiltrado);
                 
-               // Se o grupo ainda não existir, cria um array para armazenar os pacotes
+                // Se o grupo ainda não existir, cria um array para armazenar os pacotes
                 if (!grupos[prefixoDigitos]) {
-                    grupos[prefixoDigitos] = { amostras: [], max_amostras: 5, faltantes: 5 };
+                    grupos[prefixoDigitos] = [];
                 }
-
-                // Adiciona a nova amostra com a descrição
-                if (!grupos[prefixoDigitos].amostras.some(amostra => amostra.codigobarras === pacote.codigobarrasFiltrado)) {
-                    grupos[prefixoDigitos].amostras.push({
-                        codigobarras: pacote.codigobarrasFiltrado,
-                        descricao: pacote.descricao
-                    });
-                    grupos[prefixoDigitos]['faltantes'] = grupos[prefixoDigitos]['max_amostras'] - grupos[prefixoDigitos]['amostras'].length;
-                }
+                grupos[prefixoDigitos].push(pacote);
             });
 
             // Exibe os pacotes agrupados
@@ -423,46 +369,31 @@ echo "<script>
                 // Cria um título para o grupo com o prefixo e o número de pacotes
                 const tituloGrupo = document.createElement('h5');
                 tituloGrupo.className = 'alert alert-info';
-                
-                // Exibe o prefixo e o total de amostras no título
-                const totalAmostras = grupoPacotes.Total || grupoPacotes.amostras.length;  // Use o 'Total' do backend ou a quantidade de amostras do frontend
-                tituloGrupo.textContent = `Prefixo: ${prefixo} - Total: ${totalAmostras} amostras`;
-                
+                tituloGrupo.textContent = `Prefixo: ${prefixo} - Total: ${grupoPacotes.length} amostras`;
                 pacotesList.appendChild(tituloGrupo);
 
-                
                 // Exibe cada pacote dentro do grupo
-                grupoPacotes.amostras.forEach((amostra, index) => {
+                grupoPacotes.forEach((pacote, index) => {
                     const item = document.createElement('div');
-                    if(amostra.isFromDB == true){
-                        item.className = 'alert alert-success d-flex justify-content-between align-items-center';
-                        item.innerHTML = `
-                            <span>Descrição: ${amostra.descricao}, Código de Barras: ${amostra.codigobarras}</span>
-                           
-                        `;
-                        // <button class="btn btn-danger btn-sm" onclick="removerPacote('${prefixo}', ${index})">Excluir</button>
-                    }else{
-                    item.className = 'alert alert-danger d-flex justify-content-between align-items-center';
+                    item.className = 'alert alert-secondary d-flex justify-content-between align-items-center';
                     item.innerHTML = `
-                        <span>Descrição: ${amostra.descricao}, Código de Barras: ${amostra.codigobarras}</span>
-                        <button class="btn btn-danger btn-sm" onclick="removerPacote('${prefixo}', ${index})">Excluir</button>
-                    `;}
+                        <span>Descrição: ${pacote.descricao}, Código de Barras: ${pacote.codigobarrasFiltrado}</span>
+                        <button class="btn btn-danger btn-sm" onclick="removerPacote(${index})">Excluir</button>
+                    `;
                     pacotesList.appendChild(item);
                 });
                 // Aviso se ainda faltam amostras para completar o agrupamento de 4 ou 5 amostras
-               // Exibir aviso se faltam amostras para completar o agrupamento
-                if (grupoPacotes.amostras.length < grupoPacotes.max_amostras) {
+                if (grupoPacotes.length < 4) {
                     const aviso = document.createElement('div');
                     aviso.className = 'alert alert-warning';
-                    aviso.textContent = `Faltam pelo menos ${grupoPacotes.max_amostras - grupoPacotes.amostras.length} amostras para completar este agrupamento.`;
+                    aviso.textContent = `Faltam pelo menos ${4 - grupoPacotes.length} ou ${5 - grupoPacotes.length} amostras para completar o total desta coleta.`;
                     pacotesList.appendChild(aviso);
                 }
             }
         }
 
-        function removerPacote(prefixo, index) {
+        function removerPacote(index) {
             pacotes.splice(index, 1);
-            grupos[prefixo].amostras.splice(index, 1);
             atualizarListaPacotes();
         }
 

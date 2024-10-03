@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro de Lotes</title>
+    <title>Cadastro de s</title>
     <link rel="icon" type="image/png" href="icon2.png" sizes="32x32" />
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="styles.css" rel="stylesheet">
@@ -24,13 +24,13 @@
             hiddenLaboratorio.type = 'hidden';
             hiddenLaboratorio.name = 'laboratorios[]';
             hiddenLaboratorio.value = laboratorio;
-            document.getElementById('loteForm').appendChild(hiddenLaboratorio);
+            document.getElementById('Form').appendChild(hiddenLaboratorio);
 
             const hiddenAmostras = document.createElement('input');
             hiddenAmostras.type = 'hidden';
             hiddenAmostras.name = 'amostras[]';
             hiddenAmostras.value = numeroAmostras;
-            document.getElementById('loteForm').appendChild(hiddenAmostras);
+            document.getElementById('Form').appendChild(hiddenAmostras);
 
             document.getElementById('laboratorio').value = '';
             document.getElementById('numero_amostras').value = '';
@@ -64,8 +64,8 @@
     </script>
 </head>
 <body>
-    <h1>Cadastro de Lotes</h1>
-    <form id="loteForm" method="POST" action="teste 28.php">
+    <h1>Cadastro de s</h1>
+    <form id="Form" method="POST" action="teste 28.php">
         <label for="amostras_doador">Amostras de Doadores</label>
         <input type="checkbox" name="amostras_doador" id="amostras_doador" value="1"><br>
 
@@ -115,7 +115,7 @@
         <div id="confirmarDiv" style="display:none;">
             <label for="senha">Digite sua senha para confirmar:</label>
             <input type="password" name="senha" id="senha" required><br>
-            <button type="submit">Confirmar e Cadastrar Lote</button>
+            <button type="submit">Confirmar e Cadastrar </button>
         </div>
     </form>
 

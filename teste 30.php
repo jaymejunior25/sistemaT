@@ -32,10 +32,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     try {
         $dbconn->beginTransaction();
 
-        $sql_lote = "INSERT INTO lotes (cadastrado_por, unidade_cadastro_id, amostras_doador, amostras_paciente, amostras_transplante, amostras_outros, observacoes) 
+        $sql_ = "INSERT INTO s (cadastrado_por, unidade_cadastro_id, amostras_doador, amostras_paciente, amostras_transplante, amostras_outros, observacoes) 
                      VALUES (:cadastrado_por, :unidade_cadastro_id, :amostras_doador, :amostras_paciente, :amostras_transplante, :amostras_outros, :observacoes)";
-        $stmt_lote = $dbconn->prepare($sql_lote);
-        $stmt_lote->execute([
+        $stmt_ = $dbconn->prepare($sql_);
+        $stmt_->execute([
             'cadastrado_por' => $cadastrado_por,
             'unidade_cadastro_id' => $unidade_cadastro_id,
             'amostras_doador' => $amostras_doador,
@@ -45,18 +45,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             'observacoes' => $observacoes
         ]);
 
-        $lote_id = $dbconn->lastInsertId();
+        $_id = $dbconn->lastInsertId();
 
         if (!empty($_POST['laboratorios']) && !empty($_POST['amostras'])) {
             $laboratorios = $_POST['laboratorios'];
             $amostras = $_POST['amostras'];
 
-            $sql_laboratorios = "INSERT INTO lote_laboratorios (lote_id, laboratorio, numero_amostras) VALUES (:lote_id, :laboratorio, :numero_amostras)";
+            $sql_laboratorios = "INSERT INTO _laboratorios (_id, laboratorio, numero_amostras) VALUES (:_id, :laboratorio, :numero_amostras)";
             $stmt_laboratorios = $dbconn->prepare($sql_laboratorios);
 
             for ($i = 0; $i < count($laboratorios); $i++) {
                 $stmt_laboratorios->execute([
-                    'lote_id' => $lote_id,
+                    '_id' => $_id,
                     'laboratorio' => $laboratorios[$i],
                     'numero_amostras' => $amostras[$i]
                 ]);
@@ -69,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         class PDF extends FPDF {
             function Header() {
                 $this->SetFont('Arial', 'B', 12);
-                $this->Cell(0, 10, 'Lote Cadastrado', 0, 1, 'C');
+                $this->Cell(0, 10, ' Cadastrado', 0, 1, 'C');
             }
 
             function Footer() {
@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $pdf = new PDF();
         $pdf->AddPage();
         $pdf->SetFont('Arial', '', 12);
-        $pdf->Cell(0, 10, 'Lote ID: ' . $lote_id, 0, 1);
+        $pdf->Cell(0, 10, ' ID: ' . $_id, 0, 1);
         $pdf->Cell(0, 10, 'Cadastrado por: ' . $_SESSION['user_nome'], 0, 1);
         $pdf->Cell(0, 10, 'Amostras de Doadores: ' . ($amostras_doador ? 'Sim' : 'Nao'), 0, 1);
         $pdf->Cell(0, 10, 'Amostras de Pacientes: ' . ($amostras_paciente ? 'Sim' : 'Nao'), 0, 1);
@@ -97,12 +97,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $pdf->Cell(0, 10, 'Laboratorio: ' . $laboratorio . ', Numero de Amostras: ' . $amostras[$index], 0, 1);
         }
 
-        $pdf->Output('F', 'lote_' . $lote_id . '.pdf');
+        $pdf->Output('F', '_' . $_id . '.pdf');
 
-        echo '<script>alert("Lote cadastrado com sucesso!"); window.location.href = "index.php";</script>';
+        echo '<script>alert(" cadastrado com sucesso!"); window.location.href = "index.php";</script>';
     } catch (Exception $e) {
         $dbconn->rollBack();
-        echo '<script>alert("Erro ao cadastrar o lote. Por favor, tente novamente."); window.history.back();</script>';
+        echo '<script>alert("Erro ao cadastrar o . Por favor, tente novamente."); window.history.back();</script>';
     }
 }
 ?>

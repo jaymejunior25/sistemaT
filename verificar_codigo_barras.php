@@ -29,6 +29,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
               } elseif(strlen($codigobarras) === 15){
                 $codigobarras = substr_replace($codigobarras, 'B', 0, 1);
                 $doisultimos_digitos = substr($codigobarras, -2);
+              } elseif(strlen($codigobarras) === 12){
+                $penultimo_digito = substr($codigobarras, -2, 1);
               }else {
                   if (($digitoverificarp === 'B' || $digitoverificarp === 'b') && ctype_digit($digitoverificaru)) {
                       $codigobarras = substr_replace($codigobarras, '0', -2, 1);
@@ -67,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 if($pacote_existente_enviado){
                     echo json_encode(['status' => 'desc_exists']);
                 }else{
-                        if(strlen($codigobarras)>17){
+                        if(strlen($codigobarras)>18){
                             echo json_encode(['status' => 'tamanho']);
                         }else{
                             echo json_encode(['status' => 'not_exists']);

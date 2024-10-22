@@ -12,6 +12,10 @@ if ($_SESSION['unidade_id'] != '1' && $_SESSION['user_type'] != 'admin') {
     exit();
 }
 
+$sql = "UPDATE user_sessions SET last_activity = NOW() WHERE user_id = :user_id";
+$stmt = $dbconn->prepare($sql);
+$stmt->execute([':user_id' => $_SESSION['user_id']]);
+
 $stmt = $dbconn->prepare("SELECT id, nome FROM unidadehemopa");
 $stmt->execute();
 $locais = $stmt->fetchAll(PDO::FETCH_ASSOC);

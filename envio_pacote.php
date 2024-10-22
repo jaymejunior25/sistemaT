@@ -78,10 +78,40 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
+$sql = "UPDATE user_sessions SET last_activity = NOW() WHERE user_id = :user_id";
+$stmt = $dbconn->prepare($sql);
+$stmt->execute([':user_id' => $_SESSION['user_id']]);
+
 $local_envio_id = $_SESSION['unidade_id'];
 $status_cadastro = 'cadastrado';
 $pacotes = [];
 
+// Buscar a última descrição enviada
+$sql = "SELECT descricao FROM pacotes 
+        WHERE unidade_cadastro_id = :unidade_cadastro_id and DATE(data_envio) = DATE(NOW())
+        AND status = 'enviado' 
+        ORDER BY data_envio DESC LIMIT 1";
+
+$stmt = $dbconn->prepare($sql);
+$stmt->execute([':unidade_cadastro_id' => $local_envio_id]);
+$ultimaDescricao = $stmt->fetchColumn();
+
+// Definir a descrição padrão com base na última descrição
+if ($ultimaDescricao) {
+    // Exemplo: Se a última descrição é '2° ENVIO', devemos definir a descrição para '3° ENVIO'
+    preg_match('/(\d+)(° ENVIO)/', $ultimaDescricao, $matches);
+    if ($matches) {
+        $numeroEnvio = (int)$matches[1] + 1; // Incrementa o número
+        $descricaoPadrao = $numeroEnvio . '° ENVIO'; // Define a nova descrição
+    } else {
+        $descricaoPadrao = "1° ENVIO"; // Caso a descrição não siga o padrão esperado
+    }
+} else {
+    $descricaoPadrao = "1° ENVIO"; // Caso não haja amostras enviadas
+}
+
+
+// Filtragem e busca de pacotes
 $filter_date = isset($_GET['filter_date']) ? $_GET['filter_date'] : date('Y-m-d');
 $filter_description = isset($_GET['filter_description']) ? $_GET['filter_description'] : null;
 
@@ -154,6 +184,19 @@ foreach ($pacotes as $pacote) {
 // Calcular o total de pacotes
 $totalPacotes = count($pacotes);
 
+// Contar o número de amostras por laboratório
+$amostrasPorLab = [];
+
+foreach ($pacotes as $pacote) {
+    $lab_nome = $pacote['lab_nome'];
+    if (!isset($amostrasPorLab[$lab_nome])) {
+        $amostrasPorLab[$lab_nome] = 0;
+    }
+    $amostrasPorLab[$lab_nome]++;
+}
+
+
+
 // Processar o envio dos pacotes
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_password']) && isset($_POST['pacotes'])) {
     $pacotes_selecionados = $_POST['pacotes'];
@@ -225,7 +268,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_password']) &&
 
         $pdfPath = gerarPDF($pacotes1, $totalPacotes);
         echo "<script>window.open('$pdfPath', '_blank');</script>";
-       // header('Location: index.php');
+        // header('Location: index.php');
     } else {
         $_SESSION['error_message'] = 'Senha incorreta. Por favor, tente novamente.';
     }
@@ -267,14 +310,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_password']) &&
                 <div class="col-md-4 mb-3">
                     <label for="filter_description">Filtrar por Descrição:</label>
                     <div class="form-group">
-                        
-                        <select name="filter_description" id="filter_description" class="form-control" required>
-                            <option value="1° ENVIO">1° ENVIO</option>
-                            <option value="2° ENVIO">2° ENVIO</option>
-                            <option value="3° ENVIO">3° ENVIO</option>
-                            <option value="3° ENVIO">4° ENVIO</option>
-                        </select>
-                    </div>
+                    <!-- <label for="descricao" style="color: #28a745;">Descrição:</label> -->
+                    <select name="descricao" id="descricao" class="form-control" required>
+                        <option value="1° ENVIO" <?php echo ($descricaoPadrao == "1° ENVIO") ? 'selected' : ''; ?>>1° ENVIO</option>
+                        <option value="2° ENVIO" <?php echo ($descricaoPadrao == "2° ENVIO") ? 'selected' : ''; ?>>2° ENVIO</option>
+                        <option value="3° ENVIO" <?php echo ($descricaoPadrao == "3° ENVIO") ? 'selected' : ''; ?>>3° ENVIO</option>
+                        <option value="4° ENVIO" <?php echo ($descricaoPadrao == "4° ENVIO") ? 'selected' : ''; ?>>4° ENVIO</option>
+                    </select>
+                </div>
                     <!-- <button type="submit" class="btn btn-primary">Filtrar</button> -->
                 </div>
                 <div class="col-md-4 mb-3 align-self-center">
@@ -283,10 +326,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_password']) &&
                 </div> 
             </div>
         </form>
-
+                
+        <!-- Exibir total de amostras por laboratório -->
+        <h4>Total por Laboratório:</h4>
+        <ul>
+            <?php foreach ($amostrasPorLab as $lab_nome => $count): ?>
+                <li><?php echo $lab_nome . ': ' . $count . ' amostras'; ?></li>
+            <?php endforeach; ?>
+        </ul>
         <div class="mb-3 text-center">
             <h4>Total de Amostras: <?php echo $totalPacotes; ?></h4> <!-- Total de Pacotes -->
         </div>
+        
         <form method="POST" action="" onsubmit="return confirmAction(event)">
             <div class="form-group">
                 <label for="pacotes">Pacotes Cadastrados:</label>

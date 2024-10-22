@@ -2,6 +2,10 @@
 session_start();
 include 'db.php';
 
+$sql = "UPDATE user_sessions SET last_activity = NOW() WHERE user_id = :user_id";
+$stmt = $dbconn->prepare($sql);
+$stmt->execute([':user_id' => $_SESSION['user_id']]);
+
 // Verificar se o usuário está logado
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
@@ -27,6 +31,11 @@ $timeType = '';
 $timeStart = '';
 $timeEnd = '';
 $colunas_selecionadas = [];
+
+// Exemplo de query com paginação
+$limite = 100; // Número de resultados por página
+$pagina = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
+$offset = ($pagina - 1) * $limite;
 
 // Colunas disponíveis para seleção
 $available_columns = [
@@ -215,11 +224,37 @@ if (count($conditions) > 0) {
     $sql .= " WHERE " . implode(" AND ", $conditions);
 }
 
-$sql .= " ORDER BY p.data_cadastro DESC";  // Ordenar por data de cadastro decrescente
+$sql .= " ORDER BY p.data_cadastro DESC  LIMIT $limite OFFSET $offset ";  // Ordenar por data de cadastro decrescente
 
 $stmt = $dbconn->prepare($sql);
 $stmt->execute($params);
 $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+
+// Adicionar a consulta para contar o número total de pacotes com os filtros aplicados
+$sql_count = 'SELECT COUNT(p.id) AS total FROM pacotes p 
+    LEFT JOIN unidadehemopa l_envio ON p.unidade_envio_id = l_envio.id 
+    LEFT JOIN unidadehemopa l_cadastro ON p.unidade_cadastro_id = l_cadastro.id 
+    LEFT JOIN usuarios u_cadastro ON p.usuario_cadastro_id = u_cadastro.id 
+    LEFT JOIN usuarios u_envio ON p.usuario_envio_id = u_envio.id 
+    LEFT JOIN usuarios u_recebimento ON p.usuario_recebimento_id = u_recebimento.id
+    LEFT JOIN usuarios u_recebimentoLab ON p.usuario_recebimentolab_id = u_recebimentoLab.id
+    LEFT JOIN laboratorio l_lab ON p.lab_id = l_lab.id';
+
+$conditions_count = $conditions;  // Reutilize as condições da consulta anterior
+
+if (count($conditions_count) > 0) {
+    $sql_count .= " WHERE " . implode(" AND ", $conditions_count);
+}
+
+// Preparar e executar a consulta de contagem
+$stmt_count = $dbconn->prepare($sql_count);
+$stmt_count->execute($params);
+$total_pacotes = $stmt_count->fetch(PDO::FETCH_ASSOC)['total'];
+
+// Agora você tem o número total de pacotes, pode calcular o número de páginas
+$total_paginas = ceil($total_pacotes / $limite);
+
 
 ?>
 <!DOCTYPE html>
@@ -269,7 +304,7 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <body>
     <div class="container container-custom2">
         <h2>Listagem de Amostras</h2>
-        <p><strong>Total de Amostras:</strong> <?php echo count($pacotes); ?></p>
+        <p><strong>Total de Amostras:</strong> <?php echo($total_pacotes); ?></p>
 
         <!-- Filtros e Botões -->
         <div class="row justify-content-between mb-3">
@@ -380,55 +415,96 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
         <!-- Tabela -->
         <div class="table-responsive">
-            <table class="table table-bordered table-striped">
-                <thead class="theadfixed">
-                    <tr>
-                        <?php foreach ($colunas_selecionadas as $coluna): ?>
-                            <th><?php echo $available_columns[$coluna]; ?></th>
-                        <?php endforeach; ?>
-                        <?php if ($_SESSION['user_type'] === 'admin'): ?><th>Ações</th><?php endif; ?>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($pacotes as $pacote): ?>
-                        <tr>
-                            <?php foreach ($colunas_selecionadas as $coluna): ?>
-                                <td>
-                                    
-                                    <?php
-                                    
-                                    if ($coluna == 'data_cadastro' || $coluna == 'data_envio' || $coluna == 'data_recebimento' || $coluna == 'data_recebimentolab') {
-                                        $data = $pacote[$coluna];
-                                        if ($data) {
-                                            $dateTime = new DateTime($data);
-                                            echo $dateTime->format('d-m-Y H:i');
-                                        }
-                                    } elseif ($coluna == 'status') {
-                                        if ($pacote['status'] == 'cadastrado') {
-                                            echo '<span class="badge badge-danger">cadastrado</span>';
-                                        } elseif ($pacote['status'] == 'enviado') {
-                                            echo '<span class="badge badge-warning">enviado</span>';
-                                        } elseif ($pacote['status'] == 'recebido') {
-                                            echo '<span class="badge badge-success">recebido</span>';
-                                        } elseif ($pacote['status'] == 'recebidolab') {
-                                            echo '<span  class="badge badge-primary">recebido LAB</span>';
-                                        }
-                                    } else {
-                                        echo htmlspecialchars($pacote[$coluna]);
-                                    }
-                                    ?>
-                                </td>
-                            <?php endforeach; ?>
-                            <?php if ($_SESSION['user_type'] === 'admin'): ?>
-                                <td class="btn-group-vertical">
-                                    <a href="editar_pacote.php?id=<?php echo $pacote['id']; ?>" class="btn btn-primary btn-sm">Editar</a>
-                                    <button type="button"  class="btn btn-danger btn-sm" onclick="openDeleteModal(<?php echo $pacote['id']; ?>)">Excluir</button>
-                                </td><?php endif; ?>
-                        </tr>
+    <table class="table table-bordered table-striped">
+        <thead class="theadfixed">
+            <tr>
+                <?php foreach ($colunas_selecionadas as $coluna): ?>
+                    <th><?php echo $available_columns[$coluna]; ?></th>
+                <?php endforeach; ?>
+                <?php if ($_SESSION['user_type'] === 'admin'): ?><th>Ações</th><?php endif; ?>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($pacotes as $pacote): ?>
+                <tr>
+                    <?php foreach ($colunas_selecionadas as $coluna): ?>
+                        <td>
+                            <?php
+                            if ($coluna == 'data_cadastro' || $coluna == 'data_envio' || $coluna == 'data_recebimento' || $coluna == 'data_recebimentolab') {
+                                $data = $pacote[$coluna];
+                                if ($data) {
+                                    $dateTime = new DateTime($data);
+                                    echo $dateTime->format('d-m-Y H:i');
+                                }
+                            } elseif ($coluna == 'status') {
+                                if ($pacote['status'] == 'cadastrado') {
+                                    echo '<span class="badge badge-danger">cadastrado</span>';
+                                } elseif ($pacote['status'] == 'enviado') {
+                                    echo '<span class="badge badge-warning">enviado</span>';
+                                } elseif ($pacote['status'] == 'recebido') {
+                                    echo '<span class="badge badge-success">recebido</span>';
+                                } elseif ($pacote['status'] == 'recebidolab') {
+                                    echo '<span class="badge badge-primary">recebido LAB</span>';
+                                }
+                            } else {
+                                echo htmlspecialchars($pacote[$coluna]);
+                            }
+                            ?>
+                        </td>
                     <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
+                    <?php if ($_SESSION['user_type'] === 'admin'): ?>
+                        <td class="btn-group-vertical">
+                            <a href="editar_pacote.php?id=<?php echo $pacote['id']; ?>" class="btn btn-primary btn-sm">Editar</a>
+                            <button type="button"  class="btn btn-danger btn-sm" onclick="openDeleteModal(<?php echo $pacote['id']; ?>)">Excluir</button>
+                        </td><?php endif; ?>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+</div>
+
+    <!-- Paginação -->
+    <nav aria-label="Navegação de página">
+        <ul class="pagination justify-content-center">
+            <!-- Link para a primeira página -->
+            <li class="page-item <?php if($pagina <= 1){ echo 'disabled'; } ?>">
+                <a class="page-link" href="?pagina=1">Primeira</a>
+            </li>
+
+            <!-- Link para a página anterior -->
+            <li class="page-item <?php if($pagina <= 1){ echo 'disabled'; } ?>">
+                <a class="page-link" href="?pagina=<?php echo $pagina - 1; ?>">Anterior</a>
+            </li>
+
+            <!-- Páginas numeradas -->
+            <?php
+            // Definir o intervalo de páginas a serem mostradas
+            $inicio = max(1, $pagina - 10);  // Mostra 5 páginas antes da atual
+            $fim = min($total_paginas, $pagina + 9);  // Mostra 4 páginas depois da atual
+
+            // Ajusta para sempre exibir no máximo 10 páginas
+            if (($fim - $inicio) < 19) {
+                $inicio = max(1, $fim - 19);
+            }
+
+            for($i = $inicio; $i <= $fim; $i++): ?>
+                <li class="page-item <?php if($pagina == $i){ echo 'active'; } ?>">
+                    <a class="page-link" href="?pagina=<?php echo $i; ?>"><?php echo $i; ?></a>
+                </li>
+            <?php endfor; ?>
+
+            <!-- Link para a próxima página -->
+            <li class="page-item <?php if($pagina >= $total_paginas){ echo 'disabled'; } ?>">
+                <a class="page-link" href="?pagina=<?php echo $pagina + 1; ?>">Próxima</a>
+            </li>
+
+            <!-- Link para a última página -->
+            <li class="page-item <?php if($pagina >= $total_paginas){ echo 'disabled'; } ?>">
+                <a class="page-link" href="?pagina=<?php echo $total_paginas; ?>">Última</a>
+            </li>
+        </ul>
+    </nav>
+
     </div>
     <div class="fixed-bottom toggle-footer cursor_to_down" id="footer_fixed">
         <div class="fixed-bottom border-top bg-light text-center footer-content p-2" style="z-index:4;">

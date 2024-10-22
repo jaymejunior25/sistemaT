@@ -60,13 +60,13 @@ body {
 }
 
 .btn-custom {
-    background-color: #28a745;
+    background-color: rgb(38, 168, 147);
     color: #fff;
     border: none;
 }
 
 .btn-custom:hover {
-    background-color: #218838;
+    background-color: rgb(38, 168, 147);
 }
 .scrollable {
     height: 150px;

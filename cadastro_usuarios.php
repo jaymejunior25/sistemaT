@@ -1,5 +1,6 @@
 <?php
 session_start();
+clearstatcache();
 include 'db.php';
 
 if (!isset($_SESSION['user_id'])) {
@@ -102,12 +103,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </div>
             <div class="form-group">
                 <label for="senha" style="color: #28a745;">Senha:</label>
-                <input type="password" name="senha" id="senha" class="form-control" required>
+                <div class="input-group">
+                    <input type="password" name="senha" id="senha" class="form-control" required>
+                    <div class="input-group-append">
+                        <button type="button" class="btn btn-outline-secondary" id="gerarSenha">Gerar Senha</button>
+                    </div>
+                </div>
             </div>
+
             <div class="form-group">
-                <label for="confirmar_senha" style="color: #28a745;">Confirmar Senha</label>
-                <input type="password" class="form-control" id="confirmar_senha" name="confirmar_senha" required>
+                <label for="confirmar_senha" style="color: #28a745;">Confirmar Senha:</label>
+                <div class="input-group">
+                    <input type="password" class="form-control" id="confirmar_senha" name="confirmar_senha" required>
+                    <div class="input-group-append">
+                        <button type="button" class="btn btn-outline-secondary" id="gerarSenha">Gerar Senha</button>
+                    </div>
+                </div>
             </div>
+
             <div class="form-group">
                 <label for="tipoconta" style="color: #28a745;">Função:</label>
                 <select name="tipoconta" id="tipoconta" class="form-control" required>
@@ -184,6 +197,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
             // Submete o formulário
             document.getElementById('cadastroForm').submit();
+        });
+        document.getElementById('gerarSenha').addEventListener('click', function () {
+            // Define a senha padrão
+            const senhaPadrao = 'hemopa@2024';
+
+            // Preenche os campos de senha e confirmar senha
+            document.getElementById('senha').value = senhaPadrao;
+            document.getElementById('confirmar_senha').value = senhaPadrao;
         });
 
         // Função para monitorar inatividade

@@ -65,6 +65,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Atualizar o usuário no banco de dados
         $stmt = $dbconn->prepare("UPDATE usuarios SET nome = :nome, matricula = :matricula, tipoconta = :tipoconta, usuario = :usuario WHERE id = :usuario_id");
         $stmt->execute(['nome' => $nome, 'matricula' => $matricula, 'tipoconta' => $tipo, 'usuario' => $usuario, 'usuario_id' => $usuario_id]);
+        if (!empty($_POST['senha']) && !empty($_POST['confirmar_senha'])) {
+            $senha = $_POST['senha'];
+            $confirmar_senha = $_POST['confirmar_senha'];
+        
+            if (password_verify($senha_confirmacao, $admin['senha'])) {
+                // Validar senha
+                if (strlen($_POST['senha']) < 6 || !preg_match('/[A-Za-z]/', $_POST['senha']) || !preg_match('/\d/', $_POST['senha'])) {
+                    $_SESSION['error_message'] = 'A senha deve ter pelo menos 6 caracteres e incluir números e letras.';
+                } elseif ($_POST['senha'] !== $confirmar_senha) {
+                    $_SESSION['error_message'] = 'As senhas não correspondem.';
+                } else {// Hash da nova senha antes de salvar no banco de dados
+                    $senha_hash = password_hash($senha, PASSWORD_BCRYPT);
+                
+                    // Atualizar a senha no banco de dados
+                    $stmt = $dbconn->prepare("UPDATE usuarios SET senha = :senha WHERE id = :usuario_id");
+                    $stmt->execute(['senha' => $senha_hash, 'usuario_id' => $usuario_id]);
+                }
+            }
+        }
 
         // Remover locais existentes
         $stmt = $dbconn->prepare("DELETE FROM usuario_local WHERE usuario_id = :usuario_id");
@@ -138,6 +157,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <div class="form-group">
                 <label for="usuario" style="color: #28a745">Usuário:</label>
                 <input type="text" id="usuario" name="usuario" class="form-control" value="<?php echo $usuario['usuario']; ?>" required>
+            </div>
+            <div class="form-group">
+                <label for="senha" style="color: #28a745;">Nova Senha:</label>
+                <div class="input-group">
+                <input type="password" name="senha" id="senha" class="form-control" placeholder="Digite a nova senha">
+                <div class="input-group-append">
+                        <button type="button" class="btn btn-outline-secondary" id="gerarSenha">Gerar Senha</button>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="confirmar_senha" style="color: #28a745;">Confirmar Senha:</label>
+                <div class="input-group">
+                <input type="password" name="confirmar_senha" id="confirmar_senha" class="form-control" placeholder="Confirme a nova senha">
+                <div class="input-group-append">
+                        <button type="button" class="btn btn-outline-secondary" id="gerarSenha">Gerar Senha</button>
+                </div>
+                </div>
             </div>
             <div class="form-group">
                 <label for="tipoconta" style="color: #28a745;">Função:</label>
@@ -224,6 +261,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             document.getElementById('editarForm').appendChild(input);
             // Submete o formulário
             document.getElementById('editarForm').submit();
+        });
+        document.getElementById('gerarSenha').addEventListener('click', function () {
+            // Define a senha padrão
+            const senhaPadrao = 'hemopa@2024';
+
+            // Preenche os campos de senha e confirmar senha
+            document.getElementById('senha').value = senhaPadrao;
+            document.getElementById('confirmar_senha').value = senhaPadrao;
         });
         // Função para monitorar inatividade
         let inactivityTime = function () {

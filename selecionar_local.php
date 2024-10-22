@@ -31,7 +31,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['unidade'])) {
     $stmt_nome->execute([':id' => $unidade_id]);
     $unidade_nome = $stmt_nome->fetchColumn();
     $_SESSION['unidade_nome'] = $unidade_nome;
-
+    $sql = "UPDATE user_sessions SET last_activity = NOW(), unidade_id = :unidade_id WHERE user_id = :user_id";
+    $stmt = $dbconn->prepare($sql);
+    $stmt->execute([':user_id' => $user_id,
+                    ':unidade_id' => $unidade_id]);
     header('Location: index.php');
     exit();
 }
@@ -43,8 +46,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['unidade'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Selecionar Local</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
     <link rel="icon" type="image/png" href="icon2.png" sizes="32x32" />
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
     <style>
         body {
             background-color: #f2f9f2;
@@ -56,10 +62,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['unidade'])) {
             border-radius: 8px;
             background-color: #ffffff;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            margin-top: 10%;
+            /* margin-top: 10%; */
+        }
+        .header-serda {
+            max-width: 400px;
+            background-color: rgb(38, 168, 147);
+            color: #fff; /* Texto branco */
+            text-align: center;
+            margin: 0 auto;
+            padding: 1rem;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 8px 8px 0 0;
+            margin-top: 8%;
         }
         .btn-custom {
-            background-color: #28a745;
+            background-color: rgb(38, 168, 147);
             color: white;
         }
         .btn-custom:hover {
@@ -68,11 +86,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['unidade'])) {
     </style>
 </head>
 <body>
+    <div class="header-serda">SERDA <br> Sistema de Envio Recebimento e Distribuição de Amostras</div>
     <div class="select-local-container">
-        <h2 class="text-center mb-4" style="color: #28a745;">Selecionar Local</h2>
+        <h2 class="text-center mb-4" style="color: rgb(38, 168, 147);">Selecionar Local</h2>
         <form method="POST" action="">
             <div class="form-group">
-                <label for="unidade" style="color: #28a745;">Selecione a Unidade:</label>
+                <label for="unidade" style="color: rgb(38, 168, 147);">Selecione a Unidade:</label>
                 <select name="unidade" id="unidade" class="form-control">
                     <?php foreach ($locais_vinculados as $local): ?>
                         <option value="<?php echo $local['local_id']; ?>">

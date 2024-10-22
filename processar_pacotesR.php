@@ -7,6 +7,10 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
+$sql = "UPDATE user_sessions SET last_activity = NOW() WHERE user_id = :user_id";
+$stmt = $dbconn->prepare($sql);
+$stmt->execute([':user_id' => $_SESSION['user_id']]);
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $pacotes = json_decode($_POST['pacotes'], true);
     $usuario_recebimento_id = $_SESSION['user_id'];

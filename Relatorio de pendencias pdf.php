@@ -223,13 +223,13 @@ $pacotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         foreach ($colunas_selecionadas as $column) {
             if (in_array($column, ['data_cadastro', 'data_envio'])) {
                 $dateTime = new DateTime($pacote[$column]);
-                $row[] = $dateTime->format('d-m-Y H:i');
+                $row[] = ($dateTime->format('d-m-Y H:i'));
                 //$row[] = date('d-m-Y H:i', strtotime($pacote[$column]));
             } else {
                 $row[] = $pacote[$column];
             }
         }
-        $pdf->TableLine($row, array_fill(0, count($header), 30)); // Diminuir a largura das colunas
+        $pdf->TableLine(($row ?? ''), array_fill(0, count($header), 30)); // Diminuir a largura das colunas
     }
 
 

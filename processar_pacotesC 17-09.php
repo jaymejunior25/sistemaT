@@ -14,6 +14,7 @@ $stmt = $dbconn->prepare($sql);
 $stmt->execute([':user_id' => $user_id]);
 
 
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $pacotes = json_decode($_POST['pacotes'], true);
 

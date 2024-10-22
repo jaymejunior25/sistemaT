@@ -39,6 +39,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 ?>
 
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -58,10 +60,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             border-radius: 8px;
             background-color: #ffffff;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            margin-top: 10%;
+
+        }
+        .header-serda {
+            max-width: 400px;
+            background-color: rgb(38, 168, 147);
+            color: #fff; /* Texto branco */
+            text-align: center;
+            margin: 0 auto;
+            padding: 1rem;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 8px 8px 0 0;
+            margin-top: 8%;
         }
         .btn-custom {
-            background-color: #28a745;
+            background-color: rgb(38, 168, 147);
             color: white;
         }
         .btn-custom:hover {
@@ -70,30 +84,33 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <h2 class="text-center mb-4" style="color: #28a745;">Login</h2>
-        <?php if (isset($_SESSION['success_message'])): ?>
-            <div class="alert alert-success">
-                <?php echo $_SESSION['success_message']; unset($_SESSION['success_message']); ?>
-            </div>
-        <?php endif; ?>
-        <?php if (isset($_SESSION['error_message'])): ?>
-            <div class="alert alert-danger">
-                <?php echo $_SESSION['error_message']; unset($_SESSION['error_message']); ?>
-            </div>
-        <?php endif; ?>
-        <form method="POST" action="">
-            <div class="form-group">
-                <label for="usuario" style="color: #28a745;">Nome de usuário</label>
-                <input type="text" name="usuario" id="usuario" class="form-control" required>
-            </div>
-            <div class="form-group">
-                <label for="senha" style="color: #28a745;">Senha</label>
-                <input type="password" name="senha" id="senha" class="form-control" required>
-            </div>
-            <button type="submit" class="btn btn-custom btn-block">Entrar</button>
-        </form>
-    </div>
+
+        <div class="header-serda">SERDA <br> Sistema de Envio Recebimento e Distribuição de Amostras</div>
+        <div class="login-container ">
+            <h2 class="text-center mb-4" style="color: rgb(38, 168, 147);">Login</h2>
+            <?php if (isset($_SESSION['success_message'])): ?>
+                <div class="alert alert-success">
+                    <?php echo $_SESSION['success_message']; unset($_SESSION['success_message']); ?>
+                </div>
+            <?php endif; ?>
+            <?php if (isset($_SESSION['error_message'])): ?>
+                <div class="alert alert-danger">
+                    <?php echo $_SESSION['error_message']; unset($_SESSION['error_message']); ?>
+                </div>
+            <?php endif; ?>
+            <form method="POST" action="">
+                <div class="form-group">
+                    <label for="usuario" style="color: rgb(38, 168, 147);">Nome de usuário</label>
+                    <input type="text" name="usuario" id="usuario" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="senha" style="color: rgb(38, 168, 147);">Senha</label>
+                    <input type="password" name="senha" id="senha" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-custom btn-block">Entrar</button>
+            </form>
+        </div>
+
     <div class="fixed-bottom toggle-footer cursor_to_down" id="footer_fixed" >
             <!-- style="margin-top:50px;" -->
             <div class="fixed-bottom border-top bg-light text-center footer-content p-2" style="z-index:4; ">

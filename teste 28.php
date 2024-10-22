@@ -40,8 +40,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Gerar um número de protocolo/código de barras único
     $protocolo = '115' . str_pad(rand(0, 99999), 5, '0', STR_PAD_LEFT);
 
-    // Inserir o lote no banco de dados
-    $sql = "INSERT INTO lotes (protocolo, cadastrado_por, unidade_cadastro_id, amostras_doador, amostras_paciente, amostras_transplante, amostras_outros, observacoes) 
+    // Inserir o  no banco de dados
+    $sql = "INSERT INTO s (protocolo, cadastrado_por, unidade_cadastro_id, amostras_doador, amostras_paciente, amostras_transplante, amostras_outros, observacoes) 
             VALUES (:protocolo, :cadastrado_por, :unidade_cadastro_id, :amostras_doador, :amostras_paciente, :amostras_transplante, :amostras_outros, :observacoes)";
     $stmt = $dbconn->prepare($sql);
     $stmt->execute([
@@ -55,10 +55,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         'observacoes' => $observacoes
     ]);
 
-    // Obter o ID do lote recém-inserido
-    $lote_id = $dbconn->lastInsertId();
+    // Obter o ID do  recém-inserido
+    $_id = $dbconn->lastInsertId();
 
-    // Inserir os laboratórios relacionados ao lote
+    // Inserir os laboratórios relacionados ao 
     $laboratorios = $_POST['laboratorios'];
     $amostras = $_POST['amostras'];
 
@@ -70,10 +70,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $lab = $stmt->fetch(PDO::FETCH_ASSOC);
 
 
-        $sql_lab = "INSERT INTO lotes_laboratorios (lote_id, laboratorio_id, numero_amostras) VALUES (:lote_id, :laboratorio_id, :numero_amostras)";
+        $sql_lab = "INSERT INTO s_laboratorios (_id, laboratorio_id, numero_amostras) VALUES (:_id, :laboratorio_id, :numero_amostras)";
         $stmt_lab = $dbconn->prepare($sql_lab);
         $stmt_lab->execute([
-            'lote_id' => $lote_id,
+            '_id' => $_id,
             'laboratorio_id' => $lab['id'],
             'numero_amostras' => $amostras[$i]
         ]);
@@ -85,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $barcodePath = 'barcode.png';
         file_put_contents($barcodePath, $barcode);
 
-    // Gerar o PDF com as informações do lote
+    // Gerar o PDF com as informações do 
     class PDF extends FPDF
     {
         function Header()

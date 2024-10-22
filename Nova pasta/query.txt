@@ -1,0 +1,13 @@
+select TO_CHAR(COLETA.dtcoleta, 'DD/MM/YYYY') AS DATA_COLETA, cdtipobtdoacao, cdavaltriagem from coleta, triagemcandidato
+where coleta.cdpesfiscoleta = triagemcandidato.cdpesfisdoacao
+AND COLETA.CDTRIAGEM = TRIAGEMCANDIDATO.CDTRIAGEM
+and hrtermcoleta is not NULL
+and cdpesfiscoleta = '487774'
+
+UNION
+
+select TO_CHAR(dt_colet, 'DD/MM/YYYY') AS DATA_COLETA, OBJ140.TP_OBTHE, cd_avtri from OBJ150, OBJ140
+where OBJ150.CD_PESFI = OBJ140.CD_PESFI
+AND OBJ150.CD_triag = OBJ140.CD_DOACA
+and OBJ140.hr_TERMI iS not NULL
+AND OBJ150.CD_PESFI = '487774'
